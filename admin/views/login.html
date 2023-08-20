@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+{% import "macros/head.html" as head %}
+{{head.title('Alpha')}}
+<body>
+    <div class="wrapper wrapper-full-page">
+        <div class="full-page section-image" data-color="red" data-image="/img/full-screen-image-3.jpg" ;>
+            <!--   you can change the color of the filter page using: data-color="blue | purple | green | orange | red | rose " -->
+            <div class="content">
+                <div class="container">
+                    <div class="card card-register card-plain text-center">
+                        <div class="card-header">
+                            <div class="row  justify-content-center">
+                                <div class="col-md-4">
+                                    <div class="header-text">
+                                        <h3 class="card-title">Sign in to</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="col-md-4 col-sm-6 ml-auto mr-auto">
+                                <form class="form" method="POST" action="{{admin_url}}login" id="Validation" onkeypress="return event.keyCode != 13;">
+                                    <div class="card card-login">
+                                        <div class="card-body ">
+                                            <div class="card-body">
+                                                {% import "macros/flash_message.html" as message %}
+
+                                                {{message.error(error_flash)}}
+                                                {{message.success(success_flash)}}
+
+                                                {{message.error(messages.error)}}
+                                                {{message.success(messages.success)}}
+
+                                                {% import "macros/forms.html" as form %}
+
+                                                {{form.input('Enter Contact Number','text','contactNumber',body.contactNumber,'','number=true','maxLength=10','minLength=10','required=true')}}
+                                                {{form.input('Password','password','password','','','required=true')}}
+
+                                                <!-- <div class="form-group pull-right">
+                                                    <p><a href="{{admin_url}}forgotPassword" style="font-size: .875rem; color:#888888;">Forgot password?</a></p>
+                                                </div> -->
+                                            </div>
+                                        </div>
+
+                                        <div class="card-footer ml-auto mr-auto">
+                                            <button type="submit" class="btn btn-wd element" color="red">Sign In</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% include "partials/footer.html" %}
+    </div>
+</body>
+{% include "partials/core_js.html" %}
+{% import "macros/plugins.html" as plugins %}  
+{{plugins.script('jquery.validate.min')}}
+{{plugins.script('demo')}}
+{% include "partials/setBackgroundImage.html" %}
+{% include "partials/validation.html" %}
+</html>

@@ -1,0 +1,37 @@
+{% macro form_group(label,type,name,ifvalue,elsevalue,options1,options2,options3,options4) %}
+<div class="form-group has-label">
+	<label>
+		{{label}}
+		{% if  options1 == 'required=true' or options2 == 'required=true' or options3 == 'required=true' or options4 == 'required=true' %}
+		<star class="star">*</star>
+		{% endif %}
+	</label>
+	<input type="{{type}}" name="{{name}}" {{options1}} {{options2}}  {{options3}} {{options4}} class="form-control" value="{{ ifvalue if ifvalue else elsevalue }}" />
+</div>
+{% endmacro %}
+
+{% macro hidden(name,ifvalue,elsevalue,options1) %}
+<input type="hidden" name="{{name}}"  class="form-control" value="{{ ifvalue if ifvalue else elsevalue }}" {{options1}} />
+{% endmacro %}
+
+{% macro input(placeholder,type,name,ifvalue,elsevalue,options1,options2,options3, options4) %}
+<div class="form-group">
+	<input type="{{type}}" name="{{name}}" {{options1}} {{options2}} {{options3}} {{options4}} class="form-control" placeholder="{{placeholder}}" value="{{ ifvalue if ifvalue else elsevalue }}" />
+</div>
+{% endmacro %}
+
+{% macro picker(placeholder,type,name,ifvalue,elsevalue,options1,options2,options3,options4) %}
+<input name="{{name}}" type="text" class="form-control {{type}}" {{options1}} {{options2}} {{options3}} {{options4}} placeholder="{{placeholder}}" value="{{ ifvalue if ifvalue else elsevalue }}"/>
+{% endmacro %}
+
+{% macro form_group_picker(label,type,name,ifvalue,elsevalue,options1,options2,options3,options4) %}
+<div class="form-group has-label">
+	<label>
+	{{label}}
+	{% if  options1 == 'required=true' or options2 == 'required=true' or options3 == 'required=true' or options4 == 'required=true' %}
+	<star class="star">*</star>
+	{% endif %}
+	</label>
+	<input name="{{name}}" type="text" class="form-control {{type}}" {{options1}} {{options2}} {{options3}} {{options4}} value="{{ ifvalue if ifvalue else elsevalue }}"/>
+</div>
+{% endmacro %}

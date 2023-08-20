@@ -1,0 +1,11 @@
+{% macro success(message) %}
+{% if message %}
+<div class="alert alert-primary"><button type="button" aria-hidden="true" class="close" data-dismiss="alert"><i class="nc-icon nc-simple-remove"></i></button><span><b> {{ message }} </b></span></div>
+{% endif %}
+{% endmacro %}
+
+{% macro error(message) %}
+{% if message %}
+<div class="alert alert-warning"><button type="button" aria-hidden="true" class="close" data-dismiss="alert"><i class="nc-icon nc-simple-remove"></i></button><span><b> {{ message }} </b></span></div>
+{% endif %}
+{% endmacro %}

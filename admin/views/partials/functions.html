@@ -1,0 +1,222 @@
+<script>
+function randomNumber(length,charset){
+    var charSet=charset||"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    var i=0,rnum,random="";
+    while(i<length)
+    {
+     rnum=Math.floor(Math.random()*charSet.length);
+     random+=charSet.substring(rnum,rnum+1);
+     i++;
+    }
+    return random;
+}
+
+function readURL(selector, input) {
+  if (input.files[0].name) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        $(`${selector} .img`).attr('src', e.target.result);
+        resolve();
+      }
+
+      reader.readAsDataURL(input.files[0]);
+    });
+  }
+}
+
+async function compressImage(file, { quality = 1, type = file.type }) {
+  // Get as image data
+  const imageBitmap = await createImageBitmap(file);
+
+  // Draw to canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = imageBitmap.width;
+  canvas.height = imageBitmap.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(imageBitmap, 0, 0);
+
+  // Turn into Blob
+  const blob = await new Promise(resolve =>
+    canvas.toBlob(resolve, type, quality)
+  );
+
+  // Turn Blob into File
+  return new File([blob], file.name, {
+    type: blob.type,
+  });
+}
+
+function validateEmail(email) {
+    var filter = /^([\w-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([\w-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
+    if (filter.test(email)) return true;
+    return false;  
+}
+
+function setToggleState(selector, url) {
+  $(`[data-toggle=${selector}]`).on('switchChange.bootstrapSwitch', function() {
+    const id = $(this).parents('tr').find('td').eq(0).find('span').html();
+    const status = $(this).is(':checked');
+    const obj = { id };
+    selector === 'approved' ? obj.isApproved = status: obj.status = status;
+    $.post(url, obj, function(data) {
+      if (data) console.log(data);
+    });
+  });
+}
+
+function checkLocation(selector){
+    $(`${selector} [name="location"]`).focusout(function(){
+        var location=$(this).val();
+        $.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${location}`,
+        function(data){
+            if(data.results[0])
+            {
+                $(`${selector} [name="longitude"]`).val(data.results[0].geometry.location.lng);
+                $(`${selector} [name="latitude"]`).val(data.results[0].geometry.location.lat);
+                $.get(`https://maps.googleapis.com/maps/api/timezone/json?location=${data.results[0].geometry.location.lat},${data.results[0].geometry.location.lng}&timestamp=${(new Date().getTime())/1000}&key=AIzaSyAyxRoqOAQTJ19nhonW1HwHOvjpNVlSqdU`,function(data){
+                    $(`${selector} [name="timezone"]`).val(data.rawOffset/60);
+                });
+            }
+            else
+            {
+                $(`${selector} #message`).html('<div class="alert alert-warning"><a class="close" data-dismiss="alert"><i class="nc-icon nc-simple-remove"></i></a><span><b>Enter a Valid Address</b></span></div>');
+
+                $(`${selector} [name="longitude"]`).val("");
+                $(`${selector} [name="latitude"]`).val("");
+                $(`${selector} [name="location"]`).val("");
+                $(`${selector} [name="timezone"]`).val("");
+            }
+        });
+    });
+}
+
+function onCategoryChange(selector,url){
+    $(`${selector} [name='category']`).on("changed.bs.select",function(e){
+        $.post(url,{id:$(`${selector} [name='category']`).selectpicker('val')},(data)=>{
+            $(`${selector} [name='subCategory']`).html('');
+            if(data.length)
+            {
+                $(`${selector} [name='subCategory']`).prop('required',true);
+                for(var i in data)
+                $(`${selector} [name='subCategory']`).append('<option value="'+data[i]._id+'">'+data[i].name+'</option>'); 
+                $(`${selector} [name='subCategory']`).selectpicker('refresh');    
+            }
+        });
+    });
+}
+
+function onTypeChange(selector){
+    $(`${selector} [name='isParent']`).on("changed.bs.select",function(e){
+        ($(`${selector} [name='isParent']`).selectpicker('val') === "false")
+        ?
+        $(`${selector} .parentId`).show()
+        :
+        $(`${selector} .parentId`).hide()   
+    });
+}
+
+
+function triggerFile(selector){
+    $(document).on('click',`${selector} .click`,function(){
+        $(`${selector} :file`).trigger('click');
+    });
+}
+
+function onFileChange(selector) {
+  $(document).on('change',`${selector} input:file`, async function(e) {
+    // Get the files
+    const file = e.target.files[0];
+    // No files selected
+    if (!file) return;
+
+    // We'll store the files in this data transfer object
+    const dataTransfer = new DataTransfer();
+
+    if (!file.type.startsWith('image')) {
+      // Ignore this file, but do add it to our result
+      dataTransfer.items.add(file);
+      return;
+    }
+
+    // We compress the file by 50%
+    const compressedFile = await compressImage(file, {
+      quality: 0,
+      type: 'image/jpeg',
+    });
+
+    // Save back the compressed file instead of the original file
+    dataTransfer.items.add(compressedFile);
+
+    // Set value of the file input to our new files list
+    e.target.files = dataTransfer.files;
+    
+    await readURL(selector, e.target);
+  });
+}
+
+function putFile(url,file){
+   $.ajax({url:url,type:'PUT',data:file, //headers: {'Access-Control-Allow-Origin': '*','x-amz-acl': 'public-read', 'Content-Type':fileToUpload[0].type,'Accept': '*/*',},
+        //cache: false,
+        //dataType: 'json',
+    processData: false,contentType: false,sucess:function(data){
+    }}); 
+}
+
+function checkEmail(selector,url){
+    $(`${selector} [name="email"]`).focusout(function(){
+        var email=$(this).val();
+        email_check=true;
+
+        var validity=validateEmail(email);
+        if(!validity)
+        {
+            email_check=false; 
+            message="Enter A Valid Email";
+        } 
+
+        $.post(url,{email:email},function(data){
+            if(data.message)
+            {
+               email_check=false;
+               message=data.message;
+            }
+            else return;
+        });
+    });
+}
+
+function checkContactNumber(selector, url) {
+  $(`${selector} [name="contactNumber"]`).focusout(function() {
+    const contactNumber = $(this).val();
+    contactNumber_check = true;  
+    const validity = $(this).valid();
+    if (!validity) {
+      contactNumber_check = false; 
+      message = 'Enter A Valid Contact Number';
+    }   
+    $.post(url, { contactNumber }, function(data) {
+      if (data.message) {
+        contactNumber_check = false;
+        message = data.message;
+      } else return;
+    });
+  });
+}
+
+function fieldCheck(selector,url){
+    $(`${selector} [name="name"]`).focusout(function(){
+        let name=$(this).val();
+        $.post(url,{name},function(data){
+            if(data.message)
+            {
+                $(`${selector} #message`).html('<div class="alert alert-warning"><a class="close" data-dismiss="alert"><i class="nc-icon nc-simple-remove"></i></a><span><b>'+data.message+'</b></span></div>');
+                $(`${selector} [name="name"]`).val("");            
+            }
+            else return;
+        });
+    });
+}
+
+</script>

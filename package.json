@@ -1,0 +1,35 @@
+{
+  "name": "alpha",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "admin": "nodemon -e js,html ./bin/admin"
+  },
+  "dependencies": {
+    "bcrypt": "*",
+    "body-parser": "*",
+    "connect-flash": "*",
+    "connect-mongo": "*",
+    "cookie-parser": "*",
+    "chokidar": "*",
+    "cors": "*",
+    "debug": "*",
+    "dotenv": "*",
+    "email-templates": "^2.6.0",
+    "express": "*",
+    "express-fileupload": "*",
+    "express-session": "*",
+    "lodash": "*",
+    "method-override": "*",
+    "mongoose": "^6.6.0",
+    "morgan": "*",
+    "nodemailer": "*",
+    "nunjucks": "*",
+    "randomstring": "*",
+    "serve-favicon": "*",
+    "validatorjs": "*"
+  },
+  "devDependencies": {
+    "nodemon": "*"
+  }
+}

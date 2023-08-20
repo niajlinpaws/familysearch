@@ -1,0 +1,136 @@
+<div class="sidebar" data-color="red" data-image="/img/sidebar-5.jpg">
+            <!--
+        Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
+
+        Tip 2: you can also add an image using data-image tag
+    -->
+    <div class="sidebar-wrapper">
+        <div class="logo">
+            <!-- style="background-color:white; border-radius:10%; padding:2px;" -->
+            <a href="{{admin_url}}users" class="simple-text logo-mini">
+                <!-- <img src="/logo(1).png" height="30" /> -->
+            </a>
+            <a href="{{admin_url}}users" class="simple-text logo-normal">
+                Alpha
+            </a>
+        </div>
+        <div class="user">
+            <div class="photo">
+                <img src="{{  admin_image_url + user.picture if user.picture else '/img/faces/face-1.jpg'}}" height="30" />
+            </div>
+            <div class="info">
+                <a href="javascript:void(0)">
+                    <span>{{user.name if user.name else 'Administrator'}}</span>
+                </a>
+            </div>
+        </div>
+        <ul class="nav">
+            <!-- <li class="nav-item ">
+                <a class="nav-link" href="{{admin_url}}brands">
+                    <i class="nc-icon nc-tag-content"></i>
+                    <p>Brands</p>
+                </a>
+            </li> -->
+            <li class="nav-item ">
+                <a class="nav-link" href="{{admin_url}}users">
+                    <i class="nc-icon nc-single-02"></i>
+                    <p>Users</p>
+                </a>
+            </li>
+            <!-- <li class="nav-item ">
+                <a class="nav-link" href="{{admin_url}}events">
+                    <i class="nc-icon nc-square-pin"></i>
+                    <p>Events</p>
+                </a>
+            </li> -->
+            <!-- <li class="nav-item ">
+                <a class="nav-link" href="{{admin_url}}products">
+                    <i class="nc-icon nc-notes"></i>
+                    <p>Products</p>
+                </a>
+            </li> -->
+            <!-- <li class="nav-item ">
+                <a class="nav-link" data-toggle="modal" data-target="#viewUser" href="javascript:void(0)">
+                <a class="nav-link" href="{{admin_url}}notifications">
+                    <i class="nc-icon nc-bell-55"></i>
+                    <p>Notifications</p>
+                </a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="{{admin_url}}requests">
+                    <i class="nc-icon nc-single-copy-04 "></i>
+                    <p>Requests</p>
+                </a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="{{admin_url}}reports">
+                    <i class="nc-icon nc-paper-2"></i>
+                    <p>Reports</p>
+                </a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="{{admin_url}}pages">
+                    <i class="nc-icon nc-puzzle-10"></i>
+                    <p>Pages</p>
+                </a>
+            </li> -->
+        </ul>
+    </div>
+</div>
+
+<div class="modal fade modal-primary" id="viewUser" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header justify-content-center">
+                <!-- <h4>User Details</h4> -->
+            </div>
+            <div class="modal-body">
+                {% import "macros/forms.html" as form %}
+                <form method="POST" action="{{admin_url}}notifications/send" enctype="multipart/form-data" onkeypress="return event.keyCode != 13;">
+                    <div style="border:none;" class="card">
+                        <div class="card-header ">
+                            <h3 class="card-title text-center">Send Notification</h3>
+                            <br/>
+                        </div>
+                        <div class="card-body ">
+
+                            <div class="form-group has-label">
+                                <label>
+                                    Intended Audience
+                                    <star class="star">*</star>
+                                </label>
+                                <select name="receiverType" class="selectpicker" data-title="Select Audience" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" data-size="5" required>
+                                    <option value="all">All</option>
+                                    <option value="businessUser">Business Users</option>
+                                    <option value="user">Users</option>
+                                </select>
+                            </div>
+
+                            <!-- <div class="form-group has-label">
+                                <label>
+                                   Title              
+                                    <star class="star">*</star>
+                                </label>
+                                <input type="text" name="title" class="form-control" required="true" />
+                            </div> -->
+
+                            <div class="form-group has-label">
+                                <label>
+                                   Description              
+                                    <star class="star">*</star>
+                                </label>   
+                                <textarea name="description" class="form-control" style="height: 124px;" required></textarea>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary btn-wd">Submit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+            </div>
+        </div>
+    </div>
+</div>

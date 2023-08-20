@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+{% import "macros/head.html" as head %}
+{{head.title('Alpha')}}
+<body>
+    <div class="wrapper">
+        {% include "partials/sidebar.html" %}
+        {% include "partials/navbar.html" %}
+        {% import "macros/dashboard_card.html" as dashboard %}
+            <div class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-lg-3 col-sm-6">
+                            {{dashboard.card('nc-square-pin','text-success','Events',data.lastMonthEventCount,'fa fa-calendar-o','From the last month')}}
+                        </div>
+                        <div class="col-lg-3 col-sm-6">
+                            {{dashboard.card('nc-circle-09','text-warning','Users',data.lastMonthUserCount,'fa fa-calendar-o','From the last month')}}
+                        </div>
+                        <div class="col-lg-3 col-sm-6">
+                            {{dashboard.card('nc-single-02','text-primary','Business Users',data.lastMonthBusinessUserCount,'fa fa-calendar-o','From the last month')}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% include "partials/core_js.html" %}
+{% import "macros/plugins.html" as plugins %}  
+{{plugins.script('light-bootstrap-dashboard')}}
+{{plugins.script('bootstrap-selectpicker')}}
+</html>

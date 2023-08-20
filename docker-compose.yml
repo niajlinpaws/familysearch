@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  alpha:
+    container_name: alpha
+    image: node:18
+    volumes:
+      - ./:/usr/src/alpha:cached
+      - ./node_modules:/usr/src/alpha/node_modules:cached
+    working_dir: /usr/src/alpha
+    command: bash -c "
+      yarn &&
+      yarn admin &
+      echo 'Backend starting on port 8000' &&
+      tail -f /dev/null"
+    ports:
+      - 8000:8000
+    environment:
+      - MONGO_URI=mongodb+srv://swapniljainrock:FiwK8SaUouz3Oo0F@cluster0.9xtggfg.mongodb.net/
+      - SESSION_SECRET=57065d0113918ca402a0f2ad57065d0113918ca402a0f2ad
+      - SESSION_MAX_AGE=60000000000
+      - ADMIN_PORT=8000
+      - ADMIN_URL=/admin/

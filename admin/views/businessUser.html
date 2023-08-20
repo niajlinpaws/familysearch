@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+{% import "macros/head.html" as head %}
+{{head.title('Alpha')}}
+<body>
+    <div class="wrapper">
+        {% include "partials/sidebar.html" %}
+        {% include "partials/navbar.html" %}
+        {% import "macros/forms.html" as form %}
+        <div class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card data-tables">
+                            <div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+                                <div class="toolbar">
+                                    <div class="btn-group">
+                                        &nbsp;&nbsp;&nbsp;
+                                        <button class="btn btn-icon btn-primary add" data-toggle="modal" data-target="#addBusinessUser">
+                                        <i class="fa fa-plus"></i> Add Business User
+                                        </button>
+                                        <button class="btn btn-icon btn-primary csv">
+                                         CSV
+                                        </button> 
+                                    </div>
+                                    <br/><br/>
+                                </div>
+                                <div class="fresh-datatables">
+                                    <table id="userTable" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Business Name</th>
+                                                <th>Email</th>
+                                                <th>Country Code</th>
+                                                <th>Contact Number</th>
+                                                <th>Location</th>
+                                                <th>Website</th>
+                                                <th data-sortable="false">Status</th>
+                                                <th data-sortable="false">Approve</th>
+                                                <th data-sortable="false">Actions</th>
+                                                <th data-sortable="false"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Add Business User Modal -->
+    <div class="modal fade modal-primary" id="addBusinessUser" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header justify-content-center">
+                    <h4>Add Business User</h4>
+                </div>
+                <div class="modal-body text-center">
+                    <form method="POST" action="{{admin_url}}users/add/business" id="addValidation" enctype="multipart/form-data" onkeypress="return event.keyCode != 13;">
+                        <div id="message">
+                        </div>
+                        {{form.input('Business Name','text','firstName',body.firstName,'',"required=true")}}
+
+                        {{form.input('Location','text','location',body.location,'',"required=true","id=addLocation")}}
+
+                        {{form.hidden('latitude',body.latitude,'')}}
+                        {{form.hidden('longitude',body.longitude,'')}}
+
+                        <div class="form-group">
+                            <select name="countryCode" class="selectpicker" data-title="Select Country Code" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" data-size="5" required>
+                                {% for country in country %}
+                                <option value="{{country.dial_code}}">{{country.dial_code}} &nbsp;&nbsp;  {{country.name}} ({{country.code}})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {{form.input('Phone Number','text','mobile',body.mobile,'',"number=true",'maxLength=10',"required=true")}}
+
+                        {{form.input('Email','email','email',body.email,'',"required=true")}}
+
+                        {{form.input('Password','password','password','','',"required=true","minLength=6","id=registerPassword")}}
+
+                        {{form.input('Password Confirmation','password','confirm_password','','',"required=true","equalTo=#registerPassword","id=registerPasswordConfirmation")}}
+
+                        {{form.input('Website','text','website',body.website,'',"url=true","required=true","style=text-transform:none;")}}
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <button type="button" class="click btn btn-primary">Browse</button>
+                                </div>
+                                <div class="col-sm-7">
+                                    <input type="file" name="picture" style="display:none"/>
+                                    <img class="img" src="" height="80">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-wd btn-primary">Add Business User</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--  End Modal -->
+
+    <!-- Edit Business User Modal -->
+    <div class="modal fade modal-primary" id="editBusinessUser" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header justify-content-center">
+                    <h4>Edit Business User</h4>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{admin_url}}users/edit/business" enctype="multipart/form-data" id="Validation" onkeypress="return event.keyCode != 13;">
+                        <div id="message">
+                        </div>
+
+                        {{form.hidden('id',body.id,'',"required=true")}}
+
+                        {{form.form_group('Business Name','text','firstName',body.firstName,'',"required=true")}}
+
+                        {{form.form_group('Location','text','location',body.location,'',"required=true","id=editLocation")}}
+
+                        {{form.hidden('latitude',body.latitude,'')}}
+                        {{form.hidden('longitude',body.longitude,'')}}
+
+                        <div class="form-group">
+                            <label>Country Code</label>
+                            <select name="countryCode" class="selectpicker" data-title="Select Country Code" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" data-size="5" required>
+                                {% for country in country %}
+                                <option value="{{country.dial_code}}">{{country.dial_code}} &nbsp;&nbsp;  {{country.name}} ({{country.code}})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {{form.form_group('Phone Number','text','mobile',body.mobile,'',"number=true",'maxLength=10',"required=true")}}
+
+                        {{form.form_group('Website','text','website',body.website,'',"url=true","style=text-transform:none;","required=true")}}
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <button type="button" class="click btn btn-primary">Browse</button>
+                                </div>
+                                <input type="file" name="picture" style="display:none"/>
+                                <img class="img" src="" height="80">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-wd btn-primary">Update Business User</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--  End Modal -->
+</body>
+<script>
+    /*For inlcuding variables at the top*/
+    var email_check=true;
+    var message;
+</script>
+{% include "partials/core_js.html" %}
+{% import "macros/plugins.html" as plugins %} 
+{{plugins.script('bootstrap-switch')}}
+{{plugins.script('sweetalert2.min')}}
+{{plugins.script('bootstrap-tagsinput')}}
+{{plugins.script('jquery.validate.min')}}
+{{plugins.script('jquery.dataTables.min')}}
+{{plugins.script('buttons.html5.min')}}
+{{plugins.script('dropzone')}}
+{{plugins.script('light-bootstrap-dashboard')}}
+{{plugins.script('bootstrap-selectpicker')}}
+{{plugins.script('demo')}}
+{{plugins.script('maps.googleapis.com/maps/api/')}}
+{% include "partials/validation.html" %}
+{% include "partials/functions.html" %}
+<script>
+$(document).ready(function() {
+
+    var addLocation = document.getElementById('addLocation');
+    var editLocation = document.getElementById('editLocation');
+
+    new google.maps.places.Autocomplete(addLocation);
+    new google.maps.places.Autocomplete(editLocation);
+
+    {% if error_flash %}
+        demo.showNotification('top','center','{{ error_flash }}','danger','nc-icon');
+    {% endif %}
+
+    {% if messages.error %}
+        demo.showNotification('top','center','{{ error_flash }}','danger','nc-icon');
+    {% endif %}
+
+    setFormValidation('#addValidation');
+
+    $('#userTable').DataTable({
+        "pagingType": "full_numbers",
+        "lengthMenu": [
+            [10, 25, 50, -1],
+            [10, 25, 50, "All"]
+        ],
+        "scrollX": true,
+        aaSorting:[[0,"desc"]],
+        //dom: 'Bfrtip',
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search records",
+        },
+        //"bPaginate": false,
+        //"bInfo": false,
+        processing:true,
+        serverSide:true,
+        ajax:{
+            url:'{{admin_url}}users/find/business',
+            type:'POST',
+            "dataSrc": function ( json ) {
+
+                $(document).ready(function(){
+
+                    $("[data-toggle='switch']").bootstrapSwitch();
+
+                    $("[data-toggle='approved']").bootstrapSwitch();
+
+                    setToggleState('switch','{{admin_url}}users/status');
+
+                    setToggleState('approved','{{admin_url}}users/approve');
+
+                    for (var i in json.data)
+                    {
+                        if(json.data[i].approved)
+                        $("[name='approve_"+json.data[i]._id+"']").bootstrapSwitch('disabled',true);
+                    }
+                });
+
+                //console.log(json);
+                var arr=[];
+                for (var i in json.data)
+                {
+                    var status;
+                    var approved;
+                    json.data[i].status?status='checked':status='';
+                    json.data[i].approved?approved='checked':approved='';
+                    arr.push({
+                    's_no':json.data[i].isAdminNotified,
+                    'firstName':json.data[i].firstName+'<span style="display:none">'+json.data[i]._id+'</span>',
+                    'email':json.data[i].email,
+                    'countryCode':json.data[i].countryCode,
+                    'mobile':json.data[i].mobile,
+                    'location':json.data[i].location,
+                    'website':json.data[i].website,
+                    'status':"<input type='checkbox'"+status+" data-toggle='switch' data-on-color='primary' data-off-color='primary' data-on-text='' data-off-text=''>",
+                    'approved':"<input name='approve_"+json.data[i]._id+"' type='checkbox'"+approved+" data-toggle='approved' data-on-color='primary' data-off-color='primary' data-on-text='' data-off-text=''>",
+                    'action':'<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-primary edit" data-toggle="modal" data-target="#editBusinessUser" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/'+json.data[i]._id+'","business","{{admin_url}}users/business") href="javascript:void(0)" class="btn btn-round btn-icon btn-primary remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>',
+                    'noUse':`<span style="display:none;">${json.data[i].isAdminNotified}</span>`    
+                    });
+                }
+
+                //Make your callback here.
+                return arr;
+            } 
+
+        },
+
+        "createdRow": function( row, data, dataIndex){
+            if(!data.s_no)
+            $(row).addClass('adminNotify');
+        },
+            
+        "columns": 
+        [
+            { "data": "s_no" },
+            { "data": "firstName" ,"width":"11%" },
+            { "data": "email" ,"width":"11%" },
+            { "data": "countryCode","width":"11%" },
+            { "data": "mobile" ,"width":"11%" },
+            { "data": "location" ,"width":"11%" },
+            { "data": "website" ,"width":"11%" },
+            { "data": "status" ,"width":"11%" },
+            { "data": "approved" ,"width":"11%" },
+            { "data": "action","width":"11%" },
+            { "data": "noUse"}
+        ]
+    }).column(0).visible(false);
+
+    $('.csv').click(()=>{
+        var fileName='ClickApp'+'_'+'Business_Users'+'_'+new Date().toLocaleString()+'.csv';
+        $.get('{{admin_url}}users/csv',function(data){
+            $.fn.dataTable.fileSave(
+                new Blob( [  data  ] ),
+                fileName
+            );
+        });       
+    });
+
+    checkLocation('#addValidation');
+
+    checkLocation('#Validation');
+
+    checkEmail('#addValidation','/admin/users/check');
+
+    triggerFile('#addValidation');
+
+    triggerFile('#Validation');
+
+    onFileChange('#addValidation');
+
+    onFileChange('#Validation');
+
+    $('#addValidation').submit(function(e){
+        if(!email_check)
+        {
+            e.preventDefault();
+            e.stopPropagation();
+            $('#addValidation #message').html('<div class="alert alert-warning"><a class="close" data-dismiss="alert"><i class="nc-icon nc-simple-remove"></i></a><span><b> '+message+' </b></span></div>');
+        }
+    });
+
+    $(document).on('click','tbody>tr',function(){
+        $(this).removeClass('adminNotify');
+        let notify=$(this).children().eq(9).find('span').html();
+        let id=$(this).children().eq(0).find('span').html();
+        if( notify === 'false')
+        {
+            $.post(`{{admin_url}}/users/adminNotify/${id}`,{isAdminNotified:notify},function(data){
+            });
+        }
+    });
+
+    $(document).on('click','.edit',function(){
+        var id=$(this).parents('tr').find('td').eq(0).find('span').html();
+        $(this).removeClass('adminNotify');
+        $.get('{{admin_url}}users/view/'+id,function(data){
+            var {picture,location,latitude,longitude,firstName,website,countryCode,mobile}=data;
+            $('#Validation [name="id"]').val(id);
+            $('#Validation [name="longitude"]').val(longitude);
+            $('#Validation [name="latitude"]').val(latitude);
+            $('#Validation [name="location"]').val(location);
+            $('#Validation [name="firstName"]').val(firstName);
+            $('#Validation [name="website"]').val(website);
+            $('#Validation [name="countryCode"]').selectpicker('val',countryCode);
+            $('#Validation [name="mobile"]').val(mobile);
+            var img=picture; 
+            img ? img='{{admin_image_url}}'+img:img="";      
+            $('#Validation .img').attr('src',img);
+        });
+    });
+});
+</script>
+</html>

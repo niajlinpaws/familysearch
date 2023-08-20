@@ -1,0 +1,308 @@
+<script>
+function drop(maxFiles,arr){
+    let array =arr;
+    return {
+        url:'#',
+        method:'PUT',
+        acceptedFiles:'image/*',
+        paramName: "files",
+        maxFilesize: 2,
+        addRemoveLinks: true,
+        uploadMultiple: false,
+        maxFiles: maxFiles,
+        //parallelUploads:1,
+        autoProcessQueue: true,
+        //autoQueue: true,
+        dictDefaultMessage: "Drop files here or click to upload.",
+        accept:function(file,cb){
+
+            var random=randomNumber(6,'');
+            file.uploadName=random+'-'+file.name;
+            array.push(file.uploadName);
+            $.get(`/admin/sign-s3?file=${file.uploadName}&type=${file.type}`,
+                (data)=>{
+                    file.signedRequest = data.data.signedRequest;
+                    file.finalURL = data.data.url;
+                    cb();
+            });
+        },
+        init: function() {
+            var fileUpload=this;
+            var message;
+            this.on("complete", function(file) {
+                console.log("file",file);
+                $(".dz-remove").html("<div><span class='fa fa-trash text-primary' style='font-size: 1.5em'></span></div>");
+                $('.dz-success-mark').hide();
+            });
+
+            this.on("success",function(file){
+                console.log("file completed",file);
+            });
+
+            this.on("removedfile", function(file) {
+                console.log("file removed",file,array);
+                array.splice(array.indexOf(file.uploadName),1);
+                $.post('/admin/delete-s3Object',{file:file.uploadName},function(data){
+                    if(data)console.log("deleted",array);
+                });
+            });
+
+            this.on("addedfile",function(file){
+                console.log("file",file);
+                $(".dz-remove").html("<div><span class='fa fa-trash text-primary' style='font-size: 1.5em'></span></div>");
+                $(".dz-preview").addClass('dz-complete');
+            });
+
+            this.on('sending',function(file, xhr, formData){
+                alert('sending');
+                let _send = xhr.send;
+                //xhr.setRequestHeader('x-amz-acl', 'public-read');
+                xhr.send = function() {
+                    _send.call(xhr, file);
+                }
+            });
+
+            this.on('processing',function(file){
+                fileUpload.options.url = file.signedRequest;
+            });
+        }
+    }
+}
+
+function editDrop(maxFiles,arr){
+    let array =arr;
+    return {
+        url:'#',
+        method:'PUT',
+        acceptedFiles:'image/*',
+        paramName: "files",
+        maxFilesize: 2,
+        addRemoveLinks: true,
+        uploadMultiple: false,
+        maxFiles: maxFiles,
+        //parallelUploads:1,
+        autoProcessQueue: true,
+        //autoQueue: true,
+        dictDefaultMessage: "Drop files here or click to upload.",
+        accept:function(file,cb){
+
+            var random=randomNumber(6,'');
+            file.uploadName=random+'-'+file.name;
+            array.push(file.uploadName);
+            $.get(`/admin/sign-s3?file=${file.uploadName}&type=${file.type}`,
+                (data)=>{
+                    file.signedRequest = data.data.signedRequest;
+                    file.finalURL = data.data.url;
+                    cb();
+            });
+        },
+        init: function() {
+            var fileUpload=this;
+            var message;
+            this.on("complete", function(file) {
+                console.log("file",file);
+                $(".dz-remove").html("<div><span class='fa fa-trash text-primary' style='font-size: 1.5em'></span></div>");
+                $('.dz-success-mark').hide();
+            });
+
+            this.on("success",function(file){
+                console.log("file completed",file);
+            });
+
+            this.on("removedfile", function(file) {
+                console.log("file removed",file,array);
+                array.splice(array.indexOf(file.uploadName),1);
+                $.post('/admin/delete-s3Object',{file:file.uploadName},function(data){
+                    if(data)console.log("deleted",array);
+                });
+            });
+
+            this.on("addedfile",function(file){
+                console.log("file",file);
+                $(".dz-remove").html("<div><span class='fa fa-trash text-primary' style='font-size: 1.5em'></span></div>");
+                $(".dz-preview").addClass('dz-complete');
+            });
+
+            this.on('sending',function(file, xhr, formData){
+                alert('sending');
+                let _send = xhr.send;
+                //xhr.setRequestHeader('x-amz-acl', 'public-read');
+                xhr.send = function() {
+                    _send.call(xhr, file);
+                }
+            });
+
+            this.on('processing',function(file){
+                fileUpload.options.url = file.signedRequest;
+            });
+
+            $(".edit").click(function(){
+                demo.initLBDWizard('#Validation');
+                if(eventId)
+                {
+                    $('#Validation [name="id"]').val(eventId);
+                    $('.view').hide();
+                    $('.view_detail').hide();
+                    $('#Validation').show();
+                    $('#addValidation').hide();
+                    $('#Validation .btn-next').removeClass('disabled');
+                    $('.dz-preview').remove();
+                    $.get(`{{admin_url}}/events/view/${eventId}`,function(data){
+                        $('#Validation [name="eventName"]').val(data.eventName);
+                        $('#Validation [name="user"]').selectpicker('val',data.user._id);
+                        $('#Validation [name="description"]').val(data.description);
+                        $('#Validation [name="location"]').val(data.location);
+                        $('#Validation [name="latitude"]').val(data.loc[1]);
+                        $('#Validation [name="longitude"]').val(data.loc[0]);
+                        $.get(`https://maps.googleapis.com/maps/api/timezone/json?location=${data.loc[1]},${data.loc[0]}&timestamp=${(new Date().getTime())/1000}&key=AIzaSyAyxRoqOAQTJ19nhonW1HwHOvjpNVlSqdU`,function(data){
+                            $(`#Validation [name="timezone"]`).val(data.rawOffset/60);
+                        });
+                        $('#Validation [name="category"]').selectpicker('val',data.category);
+                        $('#Validation [name="eventType"]').selectpicker('val',data.eventType);
+                        new Promise((resolve)=>{
+                            $.post('/admin/events/categories',{id:data.category},(data)=>{
+                                $(`#Validation [name='subCategory']`).html('');
+                                for(let i in data)
+                                $(`#Validation [name='subCategory']`).append('<option value="'+data[i]._id+'">'+data[i].name+'</option>'); 
+                                $(`#Validation [name='subCategory']`).selectpicker('refresh');
+                                resolve(); 
+                            });
+                        })
+                        .then(()=>{
+                            $('#Validation [name="subCategory"]').selectpicker('val',data.subCategory);
+                        });
+                        $('#Validation [name="eventStartDateTime"]').val(data.eventStartDateTime);
+                        $('#Validation [name="eventEndDateTime"]').val(data.eventEndDateTime);
+                        $('#Validation [name="startDateTime"]').val(data.startDateTime);    
+                        $('#Validation [name="endDateTime"]').val(data.endDateTime);
+                        if(data.coupons.length)
+                        {
+                            $('#Validation [name="couponCode"]').val(data.coupons[0].couponCode);
+                            $('#Validation [name="couponDescription"]').val(data.coupons[0].description);
+                            if(data.coupons[0].expiryDate)
+                            {
+                                let date=data.validity;
+                                $('#Validation [name="expiryDate"]').val(new Date(data.coupons[0].expiryDate).toLocaleString());
+                            }
+                        }
+                        if(data.pictures.length)
+                        {
+                            fileUpload.options.maxFiles = 10 - data.pictures.length;
+                            $.each(data.pictures,function(key,value){
+                                array.push(value);
+                                var name=value.split('-');
+                                var mockFile={full_name:name.join('-'),path:`{{admin_image_url}}${value}`,name:name[1],size:1024*1024*( Math.random()+0.8)};
+                                fileUpload.emit("addedfile",mockFile);
+                                fileUpload.options.thumbnail.call(fileUpload,mockFile,`{{admin_image_url}}${value}`);
+                                fileUpload.emit("complete", mockFile);
+                            });
+                        }
+                    });
+                }      
+            });
+        }
+    }
+}
+
+function editCouponDrop(maxFiles,arr){
+    let array =arr;
+    return {
+        url:'#',
+        method:'PUT',
+        acceptedFiles:'image/*',
+        paramName: "files",
+        maxFilesize: 2,
+        addRemoveLinks: true,
+        uploadMultiple: false,
+        maxFiles: maxFiles,
+        //parallelUploads:1,
+        autoProcessQueue: true,
+        //autoQueue: true,
+        dictDefaultMessage: "Drop files here or click to upload.",
+        accept:function(file,cb){
+
+            var random=randomNumber(6,'');
+            file.uploadName=random+'-'+file.name;
+            array.push(file.uploadName);
+            $.get(`/admin/sign-s3?file=${file.uploadName}&type=${file.type}`,
+                (data)=>{
+                    file.signedRequest = data.data.signedRequest;
+                    file.finalURL = data.data.url;
+                    cb();
+            });
+        },
+        init: function() {
+            var fileUpload=this;
+            var message;
+            this.on("complete", function(file) {
+                console.log("file",file);
+                $(".dz-remove").html("<div><span class='fa fa-trash text-primary' style='font-size: 1.5em'></span></div>");
+                $('.dz-success-mark').hide();
+            });
+
+            this.on("success",function(file){
+                console.log("file completed",file);
+            });
+
+            this.on("removedfile", function(file) {
+                console.log("file removed",file,array);
+                array.splice(array.indexOf(file.uploadName),1);
+                $.post('/admin/delete-s3Object',{file:file.uploadName},function(data){
+                    if(data)console.log("deleted",array);
+                });
+            });
+
+            this.on("addedfile",function(file){
+                console.log("file",file);
+                $(".dz-remove").html("<div><span class='fa fa-trash text-primary' style='font-size: 1.5em'></span></div>");
+                $(".dz-preview").addClass('dz-complete');
+            });
+
+            this.on('sending',function(file, xhr, formData){
+                alert('sending');
+                let _send = xhr.send;
+                //xhr.setRequestHeader('x-amz-acl', 'public-read');
+                xhr.send = function() {
+                    _send.call(xhr, file);
+                }
+            });
+
+            this.on('processing',function(file){
+                fileUpload.options.url = file.signedRequest;
+            });
+
+            $(".edit").click(function(){
+                demo.initLBDWizard('#Validation');
+                if(eventId)
+                {
+                    $('#Validation [name="id"]').val(eventId);
+                    $('.view').hide();
+                    $('.view_detail').hide();
+                    $('#Validation').show();
+                    $('#addValidation').hide();
+                    $('#Validation .btn-next').removeClass('disabled');
+                    $('.dz-preview').remove();
+                    $.get(`{{admin_url}}/events/view/${eventId}`,function(data){
+                        if(data.coupons[0] && data.coupons[0].picture)
+                        {
+                            array.push(data.coupons[0].picture);
+                            fileUpload.options.maxFiles =0;
+                            var name=data.coupons[0].picture.split('-');                            
+                            var mockFile={full_name:name.join('-'),path:`{{admin_image_url}}${name.join('-')}`,name:name[1],size:1024*1024*( Math.random()+0.8)};
+                            fileUpload.emit("addedfile",mockFile);
+                            fileUpload.options.thumbnail.call(fileUpload,mockFile,`{{admin_image_url}}${name.join('-')}`);
+                           fileUpload.emit("complete", mockFile);
+                        }
+
+                    });
+                }      
+            });
+        }
+    }
+}
+
+var addEvent=drop(10,addFile);
+var addCoupon=drop(1,addCouponFile);
+var editEvent=editDrop(10,editFile);
+var editCoupon=editCouponDrop(1,editCouponFile);
+</script>

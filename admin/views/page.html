@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+{% import "macros/head.html" as head %}
+{{head.title('Click App')}}
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-bs4.css" rel="stylesheet">
+</head>
+<body>
+    <div class="wrapper">
+        {% include "partials/sidebar.html" %}
+        {% include "partials/navbar.html" %}
+        {% import "macros/forms.html" as form %}
+        {% import "macros/card_element.html" as card %}
+        <div class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card data-tables">
+                            <div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+                                <div class="fresh-datatables">
+                                    <table id="pageTable" class="table table-striped table-no-bordered table-hover" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th data-sortable="false"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for page in page %}    
+                                            <tr>
+                                                <td>{{page.title}}</td>
+                                                <td><span style="display:none;">{{page.description}}</span><span style="display:none;">{{page.slug}}</span></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th data-sortable="false"></th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8 col-sm-12">
+                        <div class="card card-info">
+                            <div class="card-header no-padding">
+                                <div class="header text-center">
+                                    <h4>Click On Any Row To View Details</h4>
+                                </div>
+                                <div style="display:none;" class="row action-buttons">
+                                    <div class="col-sm-6">
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="text-right">
+                                            <a href="javascript:void(0)" rel="tooltip" title="Edit Page" class="btn btn-round btn-icon btn-primary edit"><i class="fa fa-edit"></i></a>&nbsp;
+                                        </div>
+                                    </div>
+                                </div> 
+                            </div>
+                            <div class="card-body">
+                                <div style="display:none" class="view capitalize">
+                                    {{card.element('Title','2','7')}}
+                                    {{card.element('Description','2','8')}}
+                                </div>
+                                <form id="Validation" style="display:none;" method="POST" action="{{admin_url}}/pages/edit">
+
+                                    <h3 class="card-description text-center">Edit Page</h3>
+                                    <br/>
+                                    <div id="message">
+                                    </div>
+                                    {{form.hidden('slug',body.slug,'',"required=true")}}
+
+                                    {{form.form_group('Title','text','title',body.title,'',"required=true")}}
+                       
+                                    <textarea name="description" class="summernote" required>
+                                        
+                                    </textarea>
+
+                                    <div class="form-group">
+                                        <div class="text-center">
+                                            <button type="submit" class="btn btn-wd btn-primary">Edit Page</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div> 
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% include "partials/core_js.html" %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-bs4.js"></script>
+{% import "macros/plugins.html" as plugins %} 
+{{plugins.script('jquery.validate.min')}}
+{{plugins.script('jquery.dataTables.min')}}
+{{plugins.script('light-bootstrap-dashboard')}}
+{{plugins.script('bootstrap-selectpicker')}}
+{{plugins.script('demo')}}
+{% include "partials/validation.html" %}
+{% include "partials/functions.html" %}
+<script>
+let slug;
+$(document).ready(function() {
+    $('#pageTable').DataTable({
+        bFilter:false,
+        paging:false
+    });
+
+    $(document).on('click','tbody>tr',function(){
+        slug=$(this).children().eq(1).find('span').eq(1).html();
+        $('#Validation').hide();
+        $('.header').hide();
+        $('.view').show();
+        $('.action-buttons').show();
+        $('.view > .row > p').eq(0).html($(this).children().eq(0).html());
+        $('.view > .row > p').eq(1).html($(this).children().eq(1).find('span').eq(0).html());
+    });
+
+    $('#Validation').submit(function(e){
+        $('[name="description"]').val($('.note-editable').html());
+        if( !$('[name="description"]').val())
+        {
+            e.preventDefault();
+            e.stopPropagation();
+            $('#Validation #message').html('<div class="alert alert-warning"><a class="close" data-dismiss="alert"><i class="nc-icon nc-simple-remove"></i></a><span><b> Description is required  </b></span></div>');
+        }
+    });
+
+    $('.summernote').summernote({
+        height: 350,                 // set editor height
+        minHeight: null,             // set minimum height of editor
+        maxHeight: null,             // set maximum height of editor
+        focus: false                 // set focus to editable area after initializing summernote
+    });
+
+
+    $('.edit').click(function(){
+        let description =$('.view > .row > p').eq(1).html();
+        $('#Validation [name="slug"]').val(slug);
+        $('.view').hide();
+        $('#Validation').show();
+        $('#Validation [name="title"]').val($('.view > .row > p').eq(0).html());
+        $('.note-editable').html(description);
+    });
+});
+</script>
+</html>

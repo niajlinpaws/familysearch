@@ -1,0 +1,184 @@
+<script type="text/javascript">
+    $(document).ready(function() {
+        var dataTable=$('#datatables').DataTable({
+            "pagingType": "numbers",
+            "lengthMenu": [
+                [10, 25, 50, -1],
+                [10, 25, 50, "All"]
+            ],
+            aaSorting:[[0,"desc"]],
+            dom: 'Bfrtip',
+            responsive: true,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search records",
+            },
+            "bInfo": false,
+            processing:true,
+            serverSide:true,
+            ajax:{
+                url:'/admin/users/find',
+                type:'POST',
+                "dataSrc": function ( json ) {
+                    console.log(json)
+                    var arr=[];
+                    var start=json.pop()+1;
+                    for (var i in json)
+                    {
+                        arr.push({
+                        's_no':start+'<span style="display:none">'+json[i]._id+'</span>',
+                        'name':json[i].firstName,
+                        'email':json[i].email,
+                        'mobile':json[i].mobile,
+                        'location':json[i].location    
+                        });
+                        start++;
+                    }
+                    //Make your callback here.
+                    return arr;
+                } 
+            },
+            
+            "columns": 
+            [
+                { "data": "s_no" },
+                { "data": "name" },
+                { "data": "email" },
+                { "data": "mobile" },
+                { "data": "location"}
+            ]
+        });
+
+        var dishId=0;
+        var files=0;
+        var served_files=0;
+
+        Dropzone.autoDiscover = false;
+
+        $('#editFile').dropzone({
+            url:'/dish/edit',
+            method:'POST',
+            acceptedFiles:'image/*',
+            paramName: "files",
+            maxFilesize: 2,
+            addRemoveLinks: true,
+            uploadMultiple: true,
+            maxFiles: 10,
+            autoProcessQueue: false,
+            dictDefaultMessage: "Drop files here or click to upload.",
+            init:function(){
+                var editFile=this;
+                
+
+                this.on("complete", function(file) {
+                    console.log("file");
+                    $(".dz-remove").html("<div><span class='fa fa-trash text-danger' style='font-size: 1.5em'></span></div>");
+                    $('.dz-success-mark').hide();
+                });
+
+                this.on("success",function(file){
+                    console.log("file completed",file);
+                    location.href='/food_module';
+                });
+
+                this.on("removedfile", function(file) {
+                    console.log("file removed",file);
+                    $.get('/dish/delete_image?id='+dishId+'&name='+file.full_name+'&path='+file.path,function(data){
+                        console.log(data);
+                    });
+                    files--;
+                });
+
+                this.on("addedfile",function(file){
+                    console.log("file",file);
+                    files++;
+                    $(".dz-remove").html("<div><span class='fa fa-trash text-danger' style='font-size: 1.5em'></span></div>");
+                    $(".dz-preview").addClass('dz-complete');
+                });
+
+                this.on('sending',function(file, xhr, formData){
+                    formData.set('id',$('#Validation [name="id"]').val());
+                    formData.set('name', $('#Validation [name="name"]').val());
+                    formData.set('cuisine_id', $('#Validation [name="cuisine_id"]').val());
+                    formData.set('price', $('#Validation [name="price"]').val());
+                });
+
+                $('#Validation').submit(function(e){
+                    var go=true;
+                    $(this).find('input[type != "hidden"],select').each(function(){
+                        if(! $.trim($(this).val()))
+                        {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            go=false;     
+                        }
+                    });
+                    if(files>10)
+                    {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        demo.showNotification('top','center','Maximum 10 Files can be uploaded','danger','nc-icon');
+                    }
+                    if(go && (files-served_files)>0 && (files<=10))
+                    {
+                        console.log('files value and go',files-served_files,go);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        editFile.options.parallelUploads = 10;
+                        editFile.processQueue();
+                    } 
+                });
+            }
+        });
+
+        /*$('#datatables').dataTable({
+            "bProcessing": true,
+            "sAutoWidth": false,
+            "bDestroy":true,
+            "sPaginationType": "bootstrap", // full_numbers
+            "iDisplayStart ": 10,
+            "iDisplayLength": 10,
+            "bPaginate": false, //hide pagination
+            "bFilter": false, //hide Search bar
+            "bInfo": false, // hide showing entries
+        });*/
+
+        /*var table = $('#datatables').DataTable({
+            "columnDefs": [
+                {
+                    "targets": [ 2 ],
+                    "visible": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [ 3 ],
+                    "visible": false
+                }
+            ]
+        });
+
+        // Edit record
+        table.on('click', '.edit', function() {
+            $tr = $(this).closest('tr');
+
+            if ($tr.hasClass('child')) {
+                $tr = $tr.prev('.parent');
+            }
+
+            var data = table.row($tr).data();
+            alert('You press on Row: ' + data[0] + ' ' + data[1] + ' ' + data[2] + '\'s row.');
+        });
+
+        // Delete a record
+        table.on('click', '.remove', function(e) {
+            $tr = $(this).closest('tr');
+            table.row($tr).remove().draw();
+            e.preventDefault();
+        });
+
+        //Like record
+        table.on('click', '.like', function() {
+            alert('You clicked on Like button');
+        });*/
+    });
+</script>

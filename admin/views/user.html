@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+{% import "macros/head.html" as head %}
+{{head.title('Alpha')}}
+
+<body>
+  <div class="wrapper">
+    {% include "partials/sidebar.html" %}
+    {% include "partials/navbar.html" %}
+    {% import "macros/forms.html" as form %}
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card data-tables">
+              <div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+                <div class="toolbar">
+                  <div class="btn-group">
+                    &nbsp;&nbsp;&nbsp;
+                    <button class="btn btn-icon btn-danger add" data-toggle="modal" data-target="#addFamilyUser">
+                      <i class="fa fa-plus"></i> Add {{ 'Primary Contact ' if user.isAdmin else '' }}User
+                    </button>
+                  </div>
+                  <br /><br />
+                  {% if user.isAdmin %}
+                  <h4 class="text-center">Click On A Row To View Details</h4>
+                  <br /><br />
+                  {% endif %}
+                </div>
+                <div class="fresh-datatables">
+                  <table id="userTable" class="table table-striped table-no-bordered table-hover" cellspacing="0"
+                    width="100%">
+                    <thead>
+                      <tr>
+                        <th>S.No</th>
+                        {% if not user.isAdmin %}
+                        <th data-sortable="false">Picture</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Occupation</th>
+                        <th>Date Of Birth</th>
+                        <th>Date Of Marriage</th>
+                        <th>Contact Number</th>
+                        <th>Address</th>
+                        <th>Family Head</th>
+                        <th>Primary Contact Number</th>
+                        <th data-sortable="false">Actions</th>
+                        {% endif %}
+                        {% if user.isAdmin %}
+                        <th>Family Head</th>
+                        <th>Primary Contact Number</th>
+                        <th>Address</th>
+                        <th>Total Members</th>
+                        <th data-sortable="false">Status</th>
+                        {% endif %}
+                        <th data-sortable="false"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Business User Modal -->
+  <div class="modal fade modal-primary" id="addFamilyUser" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header justify-content-center">
+          <h4>Add {{ 'Primary Contact ' if user.isAdmin else '' }}User</h4>
+        </div>
+        <div class="modal-body">
+          <form method="POST" action="{{admin_url}}users/add" id="addValidation" enctype="multipart/form-data"
+            onkeypress="return event.keyCode != 13;">
+            <div id="message">
+            </div>
+            {{form.form_group('Name', 'text', 'name', body.name, '', 'required=true')}}
+
+            <div class="form-group has-label">
+              <label>
+                Gender
+                <star class="star">*</star>
+              </label>
+              <div class="row">
+                <div class="col-sm-6">
+                  <div class="form-check form-check-radio">
+                    <label class="form-check-label">
+                      <input type="radio" name="gender" class="form-check-input" value="Male" required="true"/>
+                      <span class="form-check-sign"></span>
+                      Male
+                    </label>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="form-check form-check-radio">
+                    <label class="form-check-label">
+                      <input type="radio" name="gender" class="form-check-input" value="Female" required="true"/>
+                      <span class="form-check-sign"></span>
+                      Female
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{form.form_group('Occupation', 'text', 'occupation', body.occupation, '')}}
+
+            {{form.form_group_picker('Date of birth', 'datetimepicker', 'dateOfBirth', body.dateOfBirth, '', 'required=true')}}
+
+            {{form.form_group_picker('Date of Marriage', 'datetimepicker','dateOfMarriage', body.dateOfMarriage, '')}}
+
+            {{form.form_group('Contact number', 'text', 'contactNumber', body.contactNumber, '', 'number=true', 'maxLength=10', 'minLength=10')}}
+
+            {{form.form_group('Address', 'text', 'address', body.address, '', 'required=true')}}
+            {% if not user.isAdmin %}
+            <div class="form-group has-label">
+              <label>
+                Head
+                <star class="star">*</star>
+              </label>
+              <select name="head" class="selectpicker" data-title="Select Head" data-style="btn-default btn-outline"
+                data-menu-style="dropdown-blue" data-size="5" required>
+                {% for user in users %}
+                <option value="{{user._id}}">{{user.name}}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+
+            <div class="form-group has-label">
+              <label>
+                Picture
+              </label>
+              <div class="row">
+                <div class="col-sm-3">
+                  <button type="button" class="click btn btn-danger">Browse</button>
+                </div>
+                <div class="col-sm-7">
+                  <img class="img" src="" height="80">
+                </div>
+                <div class="col-sm-2">
+                  <input type="file" name="picture" filesize="1" style="visibility:hidden;" />
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="text-center">
+                <button type="submit" class="btn btn-wd btn-danger">Add User</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--  End Modal -->
+
+  <!-- Edit User Modal -->
+  <div class="modal fade modal-primary" id="editUser" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header justify-content-center">
+          <h4>Edit User</h4>
+        </div>
+        <div class="modal-body">
+          <form method="POST" action="{{admin_url}}users/edit/" enctype="multipart/form-data" id="Validation"
+            onkeypress="return event.keyCode != 13;">
+            <div id="message">
+            </div>
+            {{form.hidden('id', body.id, '', 'required=true')}}
+
+            {{form.form_group('Name', 'text', 'name', body.name, '', 'required=true')}}
+
+            <div class="form-group has-label">
+              <label>
+                Gender
+                <star class="star">*</star>
+              </label>
+              <div class="row">
+                <div class="col-sm-6">
+                  <div class="form-check form-check-radio">
+                    <label class="form-check-label">
+                      <input type="radio" name="gender" class="form-check-input" value="Male" required="true"/>
+                      <span class="form-check-sign"></span>
+                      Male
+                    </label>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="form-check form-check-radio">
+                    <label class="form-check-label">
+                      <input type="radio" name="gender" class="form-check-input" value="Female" required="true"/>
+                      <span class="form-check-sign"></span>
+                      Female
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{form.form_group('Occupation', 'text', 'occupation', body.occupation, '')}}
+
+            {{form.form_group_picker('Date of birth', 'datetimepicker', 'dateOfBirth', body.dateOfBirth, '')}}
+
+            {{form.form_group_picker('Date of Marriage', 'datetimepicker', 'dateOfMarriage', body.dateOfMarriage, '')}}
+
+            {{form.form_group('Contact number', 'text', 'contactNumber', body.contactNumber, '', 'number=true', 'maxLength=10', 'minLength=10', 'required=true')}}
+
+            {{form.form_group('Address', 'text', 'address', body.address, '', 'required=true')}}
+
+            <div class="form-group has-label">
+              <label>
+                Head
+                <star class="star">*</star>
+              </label>
+              <select name="head" class="selectpicker" data-title="Select Head" data-style="btn-default btn-outline"
+                data-menu-style="dropdown-blue" data-size="5" required>
+                {% for user in users %}
+                <option value="{{user._id}}">{{user.name}}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group has-label">
+              <label>
+                Picture
+              </label>
+              <div class="row">
+                <div class="col-sm-3">
+                  <button type="button" class="click btn btn-danger">Browse</button>
+                </div>
+                <div class="col-sm-7">
+                  <img class="img" src="" height="80">
+                </div>
+                <div class="col-sm-2">
+                  <input type="file" name="picture" filesize="1" style="visibility:hidden;" />
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="text-center">
+                <button type="submit" class="btn btn-wd btn-danger">Update User</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--  End Modal -->
+
+  <!-- Family Members Table Modal -->
+  <div class="modal fade modal-primary" id="familyUserTable" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <!-- <div class="row"> -->
+            <!-- <div style="" class="col-sm-3"> -->
+              <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+            <!-- </div> -->
+            <!-- <div class="col-sm-9">
+            </div> -->
+          <!-- </div> -->
+        </div>
+        <div class="modal-body">
+          <div style="border: none;" class="card card-info justify-content-center">
+            <div class="card-header no-padding justify-content-center">
+              <div class="view justify-content-center"></div>
+            </div>
+            <div class="card-body">
+              <div class="card data-tables">
+                <div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+                  <div class="toolbar">
+                    <div class="btn-group">
+                    </div>
+                  </div>
+                  <div class="fresh-datatables">
+                    <table id="familyMembersTable" class="table table-striped table-no-bordered table-hover" cellspacing="0"
+                      width="100%">
+                      <thead>
+                        <tr>
+                          <th>S.No</th>
+                          <th data-sortable="false">Picture</th>
+                          <th>Name</th>
+                          <th>Gender</th>
+                          <th>Occupation</th>
+                          <th>Date Of Birth</th>
+                          <th>Date Of Marriage</th>
+                          <th>Contact Number</th>
+                          <th data-sortable="false">Status</th>
+                          <!-- <th data-sortable="false">Actions</th> -->
+                          <th data-sortable="false"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- <div class="modal-footer">
+        <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+      </div> -->
+    </div>
+  </div>
+  <!--  End Modal -->
+</body>
+<script>
+  /*For inlcuding variables at the top*/
+  let contactNumber_check = true;
+  let message;
+</script>
+{% include "partials/core_js.html" %}
+{% import "macros/plugins.html" as plugins %}
+{{plugins.script('bootstrap-switch')}}
+{{plugins.script('sweetalert2.min')}}
+{{plugins.script('bootstrap-tagsinput')}}
+{{plugins.script('jquery.validate.min')}}
+{{plugins.script('jquery.dataTables.min')}}
+{{plugins.script('dropzone')}}
+{{plugins.script('light-bootstrap-dashboard')}}
+{{plugins.script('bootstrap-selectpicker')}}
+{{plugins.script('moment.min')}}
+{{plugins.script('bootstrap-datetimepicker')}}
+{{plugins.script('demo')}}
+{% include "partials/validation.html" %}
+{% include "partials/functions.html" %}
+<script>
+  $(document).ready(function () {
+    {% if error_flash %}
+    demo.showNotification('top', 'center', '{{ error_flash }}', 'danger', 'nc-icon');
+    {% endif %}
+
+    {% if messages.error %}
+    demo.showNotification('top', 'center', '{{ error_flash }}', 'danger', 'nc-icon');
+    {% endif %}
+
+    $.validator.addMethod('greaterThan', (value, element, params) => {
+      const elementToMatchDate = new Date($(params[0]).val()).getTime();
+      const currentElementDate = new Date(value).getTime();
+      if (elementToMatchDate && currentElementDate) {
+        const difference = parseInt((currentElementDate - elementToMatchDate) / (365 * 24 * 60 * 60 * 1000), 10);
+        return difference >= params[2];
+      }
+      return true;
+    }, 'Must be greater than {1}');
+
+    $.validator.addMethod(
+      'filesize',
+      (value, element, params) => ((element.files[0] && element.files[0].size) || 0) <= (params * 1024 * 1024),
+      'File size too big!',
+    );
+
+    const noWidthColumns = ['s_no', 'noUse'];
+    let columns = [];
+    {% if not user.isAdmin %}
+    columns = [
+      's_no',
+      'picture',
+      'name',
+      'gender',
+      'occupation',
+      'dateOfBirth',
+      'dateOfMarriage',
+      'contactNumber',
+      'address',
+      'head',
+      'primaryContact',
+      'actions',
+      'noUse',
+    ];
+    {% endif %}
+
+    {% if user.isAdmin %}
+    columns = [
+      's_no',
+      'head',
+      'primaryContact',
+      'address',
+      'totalMembers',
+      'status',
+      'noUse',
+    ];
+    {% endif %}
+
+    setFormValidation('#addValidation');
+
+    const userTable = $('#userTable').DataTable({
+      pagingType: 'full_numbers',
+      lengthMenu: [
+        [10, 25, 50, -1],
+        [10, 25, 50, 'All'],
+      ],
+      aaSorting: [[0, 'asc']],
+      // scrollX: true,
+      // scrollY: 300,
+      // scrollCollapse: true,
+      // dom: 'Bfrtip',
+      language: {
+        search: '_INPUT_',
+        searchPlaceholder: "Search {{ 'Approved' if not user.isAdmin else ''}} Records",
+      },
+      // bPaginate: false,
+      //"bInfo": false,
+      processing: true,
+      serverSide: true,
+      // responsive: true,
+      // fixedColumns: {
+      //   leftColumns: 2,
+      // },
+      // Note: colReorder functionality breaks the server side sorting logic, use accordingly.
+      // colReorder: {
+      //   fixedColumnsLeft: 1,
+      //   fixedColumnsRight: 1
+      // },
+      ajax: {
+        url: '{{admin_url}}users/find',
+        type: 'POST',
+        dataSrc: json => {
+          const search = userTable.search();
+          // $(document).ready(() => {
+          //   $("[data-toggle='approved']").bootstrapSwitch();
+          //   setToggleState('approved', '{{admin_url}}users/approve');
+          // });
+          // console.log(json.data)
+
+          const arr = json.data.reduce((
+            arr,
+            {
+              isApproved,
+              _id,
+              address,
+              head,
+              primaryContact,
+              totalApprovedMembers,
+              totalUnapprovedMembers,
+              totalMembers,
+              picture,
+              name,
+              gender,
+              occupation,
+              dateOfBirth,
+              dateOfMarriage,
+              contactNumber,
+            }
+          ) => {
+            let status;
+            status = isApproved ? 'checked' : '';
+            const jsonData = {
+              s_no: `<span style="display:none">${_id}</span>`,
+              address: address,
+              head: head.name,
+              primaryContact: primaryContact.contactNumber,
+              noUse: ''
+            };
+
+            {% if user.isAdmin %}
+            jsonData.status = `<div>Total Approved: ${totalApprovedMembers}</div><div>Total Unapproved: ${totalUnapprovedMembers}</div>`;
+            jsonData.totalMembers = totalMembers;
+            {% endif %}
+
+            {% if not user.isAdmin %}
+            jsonData.picture = `<img src="${picture ? '{{image_url}}' + picture : '{{image_base}}'}" width="80"><span style="display:none">${_id}</span>`,
+            jsonData.name = name,
+            jsonData.gender = gender,
+            jsonData.occupation = occupation || '',
+            jsonData.dateOfBirth = dateOfBirth,
+            jsonData.dateOfMarriage = dateOfMarriage || '',
+            jsonData.contactNumber = contactNumber,
+            jsonData.actions = search ? '' : '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editUser" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/' + _id + '","user","{{admin_url}}users") href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>';
+            {% endif %}
+
+            arr.push(jsonData);
+            return arr;
+          }, []);
+          
+          //Make your callback here.
+          return arr;
+        }
+      },
+      columns: columns.map((column, _, columns) => {
+        if (noWidthColumns.includes(column)) return { data: column };
+        return { data: column, width: `${100 / (columns.length - noWidthColumns.length)}%` };
+      }),
+      buttons: [
+        {
+          text: 'XLSX',
+          action: (e, dt, button, config) => {
+            const fileName = 'Alpha' + '_' + 'Users' + '_' + new Date().toLocaleString() + '.xlsx';
+            $.get('{{admin_url}}users/xlsx', (data) => {
+              console.log(data);
+              $.fn.dataTable.fileSave(
+                new Blob([data]),
+                fileName
+              );
+            });
+          },
+        },
+      ],
+    });
+    userTable.column(0).visible(false);
+
+    const familyMembersTable = $('#familyMembersTable').DataTable({
+      pagingType: 'full_numbers',
+      lengthMenu: [
+        [10, 25, 50, -1],
+        [10, 25, 50, 'All']
+      ],
+      aaSorting: [[0, 'desc']],
+      scrollX: true,
+      scrollY: 300,
+      scrollCollapse: true,
+      // dom: 'Bfrtip',
+      language: {
+        search: '_INPUT_',
+        searchPlaceholder: 'Search records',
+      },
+      // bPaginate: false,
+      // bInfo: false,
+      processing: true,
+      serverSide: true,
+      // responsive: true,
+      // fixedColumns: {
+      //   leftColumns: 2,
+      //   // right: 1,
+      // },
+      ajax: {
+        url: '{{admin_url}}users/find/1234567890',
+        type: 'POST',
+        dataSrc: json => {
+          // const search = familyMembersTable.search();
+          $(document).ready(() => {
+            $("[data-toggle='approved']").bootstrapSwitch();
+            setToggleState('approved', '{{admin_url}}users/approve');
+          });
+          // console.log(json.data)
+
+          const arr = json.data.reduce((
+            arr,
+            {
+              isApproved,
+              _id,
+              totalApprovedMembers,
+              totalUnapprovedMembers,
+              totalMembers,
+              picture,
+              name,
+              gender,
+              occupation,
+              dateOfBirth,
+              dateOfMarriage,
+              contactNumber,
+            }
+          ) => {
+            let status;
+            status = isApproved ? 'checked' : '';
+            arr.push({
+              s_no: `<span style="display:none">${_id}</span>`,
+              picture: `<img src="${picture ? '{{image_url}}' + picture : '{{image_base}}'}" width="80"><span style="display:none">${_id}</span>`,
+              name,
+              gender,
+              occupation: occupation || '',
+              dateOfBirth,
+              dateOfMarriage: dateOfMarriage || '',
+              contactNumber,
+              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='primary' data-off-color='primary' data-on-text='' data-off-text=''>`,
+              // actions: search ? '' : '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editUser" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/' + _id + '","user","{{admin_url}}users") href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>',
+              noUse: ''
+            });
+            return arr;
+          }, []);
+          
+          //Make your callback here.
+          return arr;
+        }
+      },
+      columns: [
+        's_no',
+        'picture',
+        'name',
+        'gender',
+        'occupation',
+        'dateOfBirth',
+        'dateOfMarriage',
+        'contactNumber',
+        'status',
+        // 'actions',
+        'noUse',
+      ].map((column, _, columns) => {
+        if (noWidthColumns.includes(column)) return { data: column };
+        return { data: column, width: `${100 / (columns.length - noWidthColumns.length)}%` };
+      }),
+    });
+    familyMembersTable.column(0).visible(false);
+
+    checkContactNumber('#addValidation', '/admin/users/check');
+
+    checkContactNumber('#Validation', '/admin/users/check');
+
+    triggerFile('#addValidation');
+
+    triggerFile('#Validation');
+
+    onFileChange('#addValidation');
+
+    onFileChange('#Validation');
+
+    $('#addValidation').submit(function (e) {
+      if (!contactNumber_check) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#addValidation #message').html('<div class="alert alert-warning"><a class="close" data-dismiss="alert"><i class="nc-icon nc-simple-remove"></i></a><span><b> ' + message + ' </b></span></div>');
+      }
+    });
+
+    $('#addValidation [name="contactNumber"]').rules('add', {
+      required: () => {
+        const dateOfBirth = new Date($('#addValidation [name="dateOfBirth"]').val());
+        const today = new Date();
+        const age = parseInt((today - dateOfBirth) / (365 * 24 * 60 * 60 * 1000), 10);
+        return age >= 18;
+      },
+    });
+
+    $('#addValidation [name="dateOfMarriage"]').rules('add', {
+      greaterThan: ['#addValidation [name="dateOfBirth"]', 'date of birth', 15],
+    });
+
+    $('#addFamilyUser').on('hidden.bs.modal', () => {
+      contactNumber_check = true;
+      message = '';
+      $('#addValidation')[0].reset();
+      $('#addValidation').data('validator').resetForm();
+      $('#addValidation .img').attr('src', '');
+    });
+
+    $('#Validation').submit(function (e) {
+      if (!contactNumber_check) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#addValidation #message').html('<div class="alert alert-warning"><a class="close" data-dismiss="alert"><i class="nc-icon nc-simple-remove"></i></a><span><b> ' + message + ' </b></span></div>');
+      }
+    });
+
+    $('#Validation [name="contactNumber"]').rules('add', {
+      required: () => {
+        const dateOfBirth = new Date($('#addValidation [name="dateOfBirth"]').val());
+        const today = new Date();
+        const age = parseInt((today - dateOfBirth) / (365 * 24 * 60 * 60 * 1000), 10);
+        return age >= 18;
+      },
+    });
+
+    $('#Validation [name="dateOfMarriage"]').rules('add', {
+      greaterThan: ['#Validation [name="dateOfBirth"]', 'date of birth', 15],
+    });
+
+    $('#editUser').on('hidden.bs.modal', () => {
+      contactNumber_check = true;
+      message = '';
+      $('#Validation')[0].reset();
+      $('#Validation').data('validator').resetForm();
+      $('#Validation .img').attr('src', '');
+    });
+
+    $(document).on('click', '.edit', function () {
+      const id = $(this).parents('tr').find('td').eq(0).find('span').html();
+      $.get('{{admin_url}}users/view/' + id, user => {
+        const { name, gender, occupation, dateOfBirth, dateOfMarriage, contactNumber, address, head, picture } = user;
+        $('#Validation [name="id"]').val(id);
+        $('#Validation [name="name"]').val(name);
+        $('#Validation [name="gender"][value="' + gender + '"]').attr('checked', 'checked');
+        $('#Validation [name="occupation"]').val(occupation);
+        $('#Validation [name="dateOfBirth"]').val(new Date(dateOfBirth).toLocaleString());
+        $('#Validation [name="dateOfMarriage"]').val(dateOfMarriage ? new Date(dateOfMarriage).toLocaleString() : '');
+        $('#Validation [name="contactNumber"]').val(contactNumber);
+        $('#Validation [name="address"]').val(address);
+        $('#Validation [name="head"]').selectpicker('val', head);
+        let img = picture;
+        img = img ? '{{admin_image_url}}' + img : '';
+        $('#Validation .img').attr('src', img);
+      });
+    });
+    {% if user.isAdmin %}
+    $(document).on('click', "#userTable td:not(:first-child)", function () {
+      const children = $(this).parent().children();
+      const head = children.eq(0).html();
+      const contactNumber = children.eq(1).html();
+      const address = children.eq(2).html();
+      // $('#Validation').hide();
+      // $('#addValidation').hide();
+      $('#familyUserTable  .view').html('');
+      $('#familyUserTable .view').append(`
+        <div class="row justify-content-center">
+          <h5 class="col-sm-12">Showing family members for</h5>
+        </div>
+        <div class="row">
+          <label class="col-sm-12">${address}, Ph: ${contactNumber}</label>
+        </div>
+      `);
+      familyMembersTable.ajax
+      .url('{{admin_url}}users/find/'+contactNumber)
+      .load();
+      familyMembersTable.draw();
+      $('#familyUserTable').modal('show');
+    });
+    {% endif %}
+  });
+</script>
+
+</html>
