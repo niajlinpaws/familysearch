@@ -7,7 +7,6 @@ const methodOverride = require('method-override')
 const session = require('express-session');
 const fileUpload = require('express-fileupload');
 const MongoStore = require('connect-mongo');
-const mongoose = require('mongoose');
 const nunjucks = require('nunjucks');
 const flash = require('connect-flash');
 const favicon = require('serve-favicon');
@@ -27,9 +26,6 @@ const {
 } = require('./config/constants');
 
 const app = express();
-
-mongoose.connect(mongoUri);
-mongoose.set('debug', true);
 
 fs.readdirSync('./models').forEach(file => {
   const model = file.split('.')[0];

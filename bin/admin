@@ -6,9 +6,25 @@
 
 const debug = require('debug')('alpha:server');
 const http = require('http');
+const mongoose = require('mongoose');
 
 const app = require('../admin');
-const { adminPort } = require('../config/constants');
+const { adminPort, mongoUri } = require('../config/constants');
+
+/**
+ * Connect to the DB function
+ */
+const connectDB = async () => {
+  try {
+    mongoose.set('strictQuery', true);
+    const conn = await mongoose.connect(mongoUri);
+    mongoose.set('debug', true);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+}
 
 /**
  * Get port from environment and store in Express.
@@ -24,11 +40,12 @@ app.set('port', port);
 const server = http.createServer(app);
 
 /**
- * Listen on provided port, on all network interfaces.
+ * Connect to the database before listening on provided port, on all network interfaces.
  */
 
- 
-server.listen(port);
+connectDB().then(() => {
+  server.listen(port);
+});
 server.on('error', onError);
 server.on('listening', onListening);
 

@@ -21,6 +21,17 @@ module.exports = {
     address: 'required|string',
     head: 'alpha_num',
   },
+  registerPrimaryContactAndUsers: {
+    'users.*.isPrimary': 'boolean',
+    'users.*.name': 'required|string',
+    'users.*.gender': 'required|in:Male,Female',
+    'users.*.occupation': 'string',
+    'users.*.dateOfBirth': 'required|date',
+    'users.*.dateOfMarriage': 'date',
+    'users.*.contactNumber': 'string|size:10',
+    'users.*.address': 'required|string',
+    'users.*.head': 'alpha_num',
+  },
   approveUser: {
     id: 'alpha_num',
     isApproved: 'boolean',

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 const userSchema = new Schema({
   picture: {
@@ -22,7 +22,6 @@ const userSchema = new Schema({
   },
   contactNumber: {
     type: String,
-    unique: true,
   },
   dateOfBirth: {
     type: Date,

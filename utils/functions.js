@@ -124,8 +124,12 @@ module.exports = {
         const errObj = validation.errors.all();
         req.flash('error', errObj[Object.keys(errObj)[0]][0]);
         console.log("validation failed",errObj[Object.keys(errObj)[0]][0]);
-        res.locals.messages = req.flash();
-        res.render(template, { body: req.body });
+        if (template) {
+          res.locals.messages = req.flash();
+          res.render(template, { body: req.body });
+        } else {
+          res.json({ message: errObj[Object.keys(errObj)[0]][0] });
+        }
       } else return next();
     };
   },

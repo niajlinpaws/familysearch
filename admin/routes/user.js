@@ -260,11 +260,39 @@ router.post('/users/find/:contactNumber?', FX.Auth, async (req, res, next) => {
   }
 });
 
-router.post('/users/check', FX.Auth, async (req, res, next) => {
-	try {
+router.post('/users/check', async (req, res, next) => {
+  try {
 	const element = FX.capitalize([Object.keys(req.body)[0]]);
 	req.body.isArchive = false;
-    const user = await User.count(req.body);
+	req.body.isAdmin = false;
+	let user;
+	if (req.body.contactNumber) {
+	  const aggregateCount = (await User.aggregate(
+        [
+          {
+            $match:  {
+              isArchive: false,
+              isAdmin: false,
+            },
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'primaryContact',
+              foreignField: '_id',
+              as: 'primaryContact'
+            },
+          },
+          { $unwind: '$primaryContact' },
+          { $match: { 'primaryContact.contactNumber': req.body.contactNumber } },
+		  { $count: "totalPrimaryContactNumber" },
+		],
+	  ))[0];
+	  user = aggregateCount && aggregateCount.totalPrimaryContactNumber;
+	} else {
+	  user = await User.count(req.body);
+	}
+	console.log('inside users check ===================>', user);
     if (user) return res.json({ message: `${element[0]} Already Exist` });
     res.json(`${element[0]} Not Found`);
   } catch(err) {
@@ -274,32 +302,79 @@ router.post('/users/check', FX.Auth, async (req, res, next) => {
 
 router.post('/users/add/:contactNumber?', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'), async (req, res, next) => {
   try {
-	const { isAdmin, primaryContact } = req.session.user;
-	if (!isAdmin) {
-	  req.body.primaryContact = primaryContact;
-	}
+    const { isAdmin, primaryContact } = req.session.user;
+    if (!isAdmin) {
+      req.body.primaryContact = primaryContact;
+    }
     if (req.files && Object.keys(req.files).length === 1) {
       const { picture } = req.files;
       const random = FX.randomNumber(6, '');
-  	  const fileName = random + '-' + picture.name;
+      const fileName = random + '-' + picture.name;
       req.body.picture = fileName;
       await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
     }
     const { _id } = await User.create(req.body);
-	if (isAdmin) {
-	  await User.updateOne(
-		{ _id },
-		{
-		  $set: {
-		    primaryContact: _id,
-			head: _id,
-			password: bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10)),
-			isApproved: true,
-		  },
-		},
-	  );
-	}
+    if (isAdmin) {
+      await User.updateOne(
+        { _id },
+        {
+          $set: {
+            primaryContact: _id,
+            head: _id,
+            password: bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10)),
+            isApproved: true,
+          },
+        },
+      );
+    }
     res.redirect('/admin/users');
+  } catch(err) {
+    next(err);
+  }
+});
+
+router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers), async (req, res, next) => {
+  if (!req.body.users.find(user => user.isPrimary && user.contactNumber)) {
+	return res.json({ message: 'contactNumber field is required for primary contact user' });
+  }
+  try {
+	let primaryContactId, headId, addressToUpdate;
+	const idsToUpdate = [];
+	await Promise.all((req.body.users ? req.body.users : [req.body]).map(async user => {
+	  const { isPrimary, isHead } = user;
+	  if ((req.files && Object.keys(req.files).length === 1) && isPrimary) {
+	    const { picture } = req.files;
+	    const random = FX.randomNumber(6, '');
+	    const fileName = random + '-' + picture.name;
+	    user.picture = fileName;
+	    await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
+	  }
+	  if (isPrimary) {
+	    user.password = bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10));
+	    addressToUpdate = user.address;
+	  }
+	  const { _id } = await User.create(user);
+	  idsToUpdate.push(_id);
+	  if (isPrimary) {
+	    primaryContactId = _id;
+	  }
+	  if (isHead) {
+	    headId = _id;
+	  }
+	}));
+    if (primaryContactId || headId) {
+      await User.updateMany(
+	    { _id: idsToUpdate },
+	    {
+	      $set: {
+	        primaryContact: primaryContactId,
+	        head: headId || primaryContactId,
+			address: addressToUpdate,
+          },
+        },
+      );
+    }
+    res.json({ message: 'Users added successfully' });
   } catch(err) {
     next(err);
   }
