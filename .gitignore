@@ -54,3 +54,6 @@ jspm_packages
 # Yarn Integrity file
 .yarn-integrity
 
+# Local image upload
+/public/img/fileupload/
+/public/img/tmp/
