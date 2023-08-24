@@ -30,7 +30,7 @@ module.exports = {
     'users.*.dateOfMarriage': 'date',
     'users.*.contactNumber': 'string|size:10',
     'users.*.address': 'required|string',
-    'users.*.head': 'alpha_num',
+    'users.*.isHead': 'boolean',
   },
   approveUser: {
     id: 'alpha_num',

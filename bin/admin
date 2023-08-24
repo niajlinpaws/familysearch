@@ -4,7 +4,7 @@
  * Module dependencies.
  */
 
-const debug = require('debug')('alpha:server');
+const debug = require('debug')('familysearch:server');
 const http = require('http');
 const mongoose = require('mongoose');
 

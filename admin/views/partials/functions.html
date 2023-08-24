@@ -117,7 +117,6 @@ function onTypeChange(selector){
     });
 }
 
-
 function triggerFile(selector){
     $(document).on('click',`${selector} .click`,function(){
         $(`${selector} :file`).trigger('click');
@@ -190,12 +189,12 @@ function checkEmail(selector,url){
 function checkContactNumber(selector, url) {
   $(`${selector} [name="contactNumber"]`).focusout(function() {
     const contactNumber = $(this).val();
-    contactNumber_check = true;  
+    contactNumber_check = true;
     const validity = $(this).valid();
     if (!validity) {
-      contactNumber_check = false; 
+      contactNumber_check = false;
       message = 'Enter A Valid Contact Number';
-    }   
+    }
     $.post(url, { contactNumber }, function(data) {
       if (data.message) {
         contactNumber_check = false;
@@ -218,5 +217,4 @@ function fieldCheck(selector,url){
         });
     });
 }
-
 </script>

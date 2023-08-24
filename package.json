@@ -1,11 +1,11 @@
 {
-  "name": "alpha",
+  "name": "familysearch",
   "version": "0.0.0",
   "private": true,
   "main": "bin/admin",
   "scripts": {
     "start": "node ./bin/admin",
-    "admin": "node ./bin/admin"
+    "admin": "nodemon -e js,html ./bin/admin"
   },
   "dependencies": {
     "bcrypt": "*",

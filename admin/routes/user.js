@@ -77,7 +77,8 @@ router.post('/users/find/:contactNumber?', FX.Auth, async (req, res, next) => {
     const sort = {};
     const search_query = {};
     const search_arr = isAdmin && !contactNumber ? [
-      'head.name',
+    //   'head.name',
+  	  'primaryContact.name',
   	  'primaryContact.contactNumber',
   	  'address',
     ]
@@ -94,7 +95,8 @@ router.post('/users/find/:contactNumber?', FX.Auth, async (req, res, next) => {
     ];
     const sort_arr = isAdmin && !contactNumber ? [
   	  'primaryContact.contactNumber',
-  	  'head.name',
+  	//   'head.name',
+  	  'primaryContact.name',
   	  'primaryContact.contactNumber',
   	  'address',
   	  'totalMembers',
@@ -170,9 +172,10 @@ router.post('/users/find/:contactNumber?', FX.Auth, async (req, res, next) => {
 	  $project: isAdmin && !contactNumber ? {
 	    _id: '$_id._id',
 	    address: 1,
-	    'head._id': 1,
-	    'head.name': 1,
+	    // 'head._id': 1,
+	    // 'head.name': 1,
 	    'primaryContact._id': 1,
+	    'primaryContact.name': 1,
 	    'primaryContact.contactNumber': 1,
 	    totalMembers: 1,
 	    totalApprovedMembers: 1,
@@ -292,7 +295,6 @@ router.post('/users/check', async (req, res, next) => {
 	} else {
 	  user = await User.count(req.body);
 	}
-	console.log('inside users check ===================>', user);
     if (user) return res.json({ message: `${element[0]} Already Exist` });
     res.json(`${element[0]} Not Found`);
   } catch(err) {

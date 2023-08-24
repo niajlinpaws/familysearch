@@ -1,13 +1,13 @@
 version: '3'
 
 services:
-  alpha:
-    container_name: alpha
+  familysearch:
+    container_name: familysearch
     image: node:18
     volumes:
-      - ./:/usr/src/alpha:cached
-      - ./node_modules:/usr/src/alpha/node_modules:cached
-    working_dir: /usr/src/alpha
+      - ./:/usr/src/familysearch:cached
+      - ./node_modules:/usr/src/familysearch/node_modules:cached
+    working_dir: /usr/src/familysearch
     command: bash -c "
       yarn &&
       yarn admin &
