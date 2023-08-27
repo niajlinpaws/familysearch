@@ -342,8 +342,29 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
   try {
 	let primaryContactId, headId, addressToUpdate;
 	const idsToUpdate = [];
-	await Promise.all((req.body.users ? req.body.users : [req.body]).map(async user => {
-	  const { isPrimary, isHead } = user;
+	await Promise.all(req.body.users.map(async ({
+	  isPrimary,
+	  isHead,
+	  name,
+	  gender,
+	  occupation,
+	  gotra,
+	  dateOfBirth,
+	  dateOfMarriage,
+	  contactNumber,
+	  address,
+	}) => {
+	  const user = {
+        isPrimary,
+        isHead,
+        name,
+        gender,
+        occupation,
+        gotra,
+		dateOfBirth,
+		dateOfMarriage,
+		contactNumber,
+      };
 	  if ((req.files && Object.keys(req.files).length === 1) && isPrimary) {
 	    const { picture } = req.files;
 	    const random = FX.randomNumber(6, '');
@@ -353,7 +374,7 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 	  }
 	  if (isPrimary) {
 	    user.password = bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10));
-	    addressToUpdate = user.address;
+	    addressToUpdate = address;
 	  }
 	  const { _id } = await User.create(user);
 	  idsToUpdate.push(_id);

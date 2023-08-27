@@ -26,6 +26,7 @@ module.exports = {
     'users.*.name': 'required|string',
     'users.*.gender': 'required|in:Male,Female',
     'users.*.occupation': 'string',
+    'users.*.gotra': 'string',
     'users.*.dateOfBirth': 'required|date',
     'users.*.dateOfMarriage': 'date',
     'users.*.contactNumber': 'string|size:10',

@@ -20,6 +20,10 @@ const userSchema = new Schema({
     type: String,
     default: '',
   },
+  gotra: {
+    type: String,
+    default: '',
+  },
   contactNumber: {
     type: String,
   },
