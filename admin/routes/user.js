@@ -361,9 +361,9 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
         gender,
         occupation,
         gotra,
-		dateOfBirth,
-		dateOfMarriage,
-		contactNumber,
+        dateOfBirth,
+        dateOfMarriage,
+        contactNumber,
       };
 	  if ((req.files && Object.keys(req.files).length === 1) && isPrimary) {
 	    const { picture } = req.files;
@@ -397,13 +397,23 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
         },
       );
     }
-    res.json({ message: 'Users added successfully' });
+	const users = (await User.find({ _id: idsToUpdate }).lean()).map(user => {
+	  const userId = `${user._id}`;
+	  if (userId === `${primaryContactId}`) {
+	    user.isPrimary = true;
+	  }
+	  if (userId === `${headId}`) {
+	    user.isHead = true;
+	  }
+	  return user;
+	});
+    res.json({ users });
   } catch(err) {
     next(err);
   }
 });
 
-router.post('/users/edit/:contactNumber?', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'), async (req, res, next) => {
+router.post('/users/edit', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'), async (req, res, next) => {
   try {
 	const { id, head, address } = req.body;
     req.body.isApproved = false;
@@ -422,7 +432,74 @@ router.post('/users/edit/:contactNumber?', FX.Auth, FX.validate(vrules.addOrEdit
   }
 });
 
-router.get('/users/delete/:id', FX.Auth, async (req, res, next) => {
+router.post('/users/edit/data', FX.validate(vrules.addOrEditUser), async (req, res, next) => {
+  try {
+	const {
+	  id,
+	  name,
+      gender,
+      occupation,
+      dateOfBirth,
+      dateOfMarriage,
+      contactNumber,
+	} = req.body;
+    await User.updateOne(
+	  { _id: ObjectId(id) },
+	  {
+	    id,
+	    name,
+	    gender,
+	    occupation,
+	    dateOfBirth,
+	    dateOfMarriage,
+	    contactNumber,
+		isApproved: false,
+	  },
+	);
+    res.json({ message: 'User edit successfully' });
+  } catch(err) {
+    next(err);
+  }
+});
+
+router.post('/users/edit/commonDetail', FX.validate(vrules.editCommonDetails), async (req, res, next) => {
+  try {
+	const { head, primaryContact, newHead, newPrimaryContact, address, nativeAddress, email, gotra } = req.body;
+	const $set = {	
+	  address,
+	  nativeAddress,
+	  email,
+	  gotra,
+	};
+	const isHeadChanged = newHead && (`${newHead}` !== `${head}`);
+	const isPrimaryContactChanged = newPrimaryContact && (`${newPrimaryContact}` !== `${primaryContact}`);
+	if(isHeadChanged || isPrimaryContactChanged) {
+	  $set.isCommonDetailApproved = false;
+	}
+    if (req.files && Object.keys(req.files).length === 1) {
+      const { picture } = req.files;
+      const random = FX.randomNumber(6, '');
+      const fileName = random + '-' + picture.name;
+      $set.picture = fileName;
+      await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
+    }
+	await User.updateMany(
+      { primaryContact },
+      {
+        $set: {
+          ...$set,
+		  ...(isHeadChanged && { head: newHead }),
+          ...(isPrimaryContactChanged && { primaryContact: newPrimaryContact }),
+        }
+	  },
+	);
+    res.json({ message: 'Common details updated successfully' });
+  } catch(err) {
+    next(err);
+  }
+});
+
+router.get('/users/delete/:id', async (req, res, next) => {
   try {
     await User.updateOne({ _id: new ObjectId(req.params.id) }, { $set:{ isArchive: true } });
 	res.status(200).json({ message:`user deleted` });
@@ -431,7 +508,7 @@ router.get('/users/delete/:id', FX.Auth, async (req, res, next) => {
   }
 });
 
-router.get('/users/view/:id', FX.Auth, async (req, res, next) => {
+router.get('/users/view/:id', async (req, res, next) => {
   try {
 	const user = await User.findById(req.params.id);
 	res.status(200).json(user);

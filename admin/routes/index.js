@@ -9,7 +9,7 @@ const User = mongoose.model('User');
 
 router.get('/login', FX.Auth, (req, res)=> res.render('login.html'));
 
-router.post('/login', FX.Auth, FX.validate(vrules.login, 'login.html'), async (req, res, next) => {
+router.post('/login', FX.validate(vrules.login, 'login.html'), async (req, res, next) => {
   try {
     const { contactNumber, password } = req.body;
     const primaryContact = await User.findOne({ contactNumber });
@@ -28,7 +28,7 @@ router.post('/login', FX.Auth, FX.validate(vrules.login, 'login.html'), async (r
         req.flash('error', 'Password Incorrect');
         res.locals.messages = req.flash();
         return res.render('login.html',{ body: req.body });
-      }  
+      }
       // if (!user.isAdmin) {
       //   FX.sendMail(
       //     'login',
@@ -42,11 +42,11 @@ router.post('/login', FX.Auth, FX.validate(vrules.login, 'login.html'), async (r
       //       if (responseStatus) console.log(responseStatus);
       //     },
       //   );
-      // }  
+      // }
       req.session.regenerate(() => {
         req.session.user = primaryContact;
         req.flash('success', 'welcome');
-        return res.redirect('/admin/users');
+        return res.redirect(`https://contactbook-niajlinpaws.vercel.app/contact/${primaryContact._id}`);
       });
     });
   } catch(err) {

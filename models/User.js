@@ -39,6 +39,14 @@ const userSchema = new Schema({
     type: String,
     default: '',
   },
+  nativeAddress: {
+    type: String,
+    default: '',
+  },
+  email: {
+    type: String,
+    default: '',
+  },
   head: {
     type: Schema.Types.ObjectId,
     ref: 'User',
@@ -49,6 +57,10 @@ const userSchema = new Schema({
   },
   password:  String,
   isApproved: {
+    type: Boolean,
+    default: false,
+  },
+  isCommonDetailsApproved: {
     type: Boolean,
     default: false,
   },
