@@ -14,7 +14,7 @@ module.exports = {
   addOrEditUser: {
     id: 'alpha_num',
     name: 'required|string',
-    gender: 'required|in:Male,Female',
+    gender: 'required|in:Male,Female,Others',
     occupation: 'string',
     dateOfBirth: 'required|date',
     dateOfMarriage: 'date',
@@ -23,7 +23,7 @@ module.exports = {
   registerPrimaryContactAndUsers: {
     'users.*.isPrimary': 'boolean',
     'users.*.name': 'required|string',
-    'users.*.gender': 'required|in:Male,Female',
+    'users.*.gender': 'required|in:Male,Female,Others',
     'users.*.occupation': 'string',
     'users.*.gotra': 'string',
     'users.*.nativeAddress': 'string',
