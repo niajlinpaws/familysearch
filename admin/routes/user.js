@@ -510,8 +510,26 @@ router.get('/users/delete/:id', async (req, res, next) => {
 
 router.get('/users/view/:id', async (req, res, next) => {
   try {
-	const user = await User.findById(req.params.id);
-	res.status(200).json(user);
+	let userData = await User.findById(req.params.id);
+	if (req.query.includeFamilyMembers === 'true') {
+	  userData = {
+	    users: (await User.find({
+		  primaryContact: userData.primaryContact,
+		  isArchive: false,
+		  isAdmin: false,
+		}).lean()).map(user => {
+            const userId = `${user._id}`;
+            if (userId === `${user.primaryContact}`) {
+              user.isPrimary = true;
+            }
+            if (userId === `${user.head}`) {
+              user.isHead = true;
+            }
+            return user;
+        }),
+	  };
+	}
+	res.status(200).json(userData);
   } catch(err) {
 	next(err);
   }
