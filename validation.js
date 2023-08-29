@@ -31,7 +31,7 @@ module.exports = {
     'users.*.dateOfBirth': 'required|date',
     'users.*.dateOfMarriage': 'date',
     'users.*.contactNumber': 'string|size:10',
-    'users.*.address': 'required|string',
+    'users.*.address': 'string',
     'users.*.isHead': 'boolean',
   },
   editCommonDetails: {

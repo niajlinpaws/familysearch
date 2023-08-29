@@ -554,7 +554,7 @@
             arr.push({
               s_no: `<span style="display:none">${_id}</span>`,
               // picture: `<img src="${picture ? '{{image_url}}' + picture : '{{image_base}}'}" width="80"><span style="display:none">${_id}</span>`,
-              name,
+              name: `${name}<span style="display:none">${_id}</span>`,
               gender,
               occupation: occupation || '',
               dateOfBirth,
