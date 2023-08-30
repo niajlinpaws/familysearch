@@ -64,6 +64,10 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  previousData: {
+    type: Object,
+    default: {},
+  },
   isAdmin: {
     type: Boolean, // true for Administrator
     default: false,

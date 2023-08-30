@@ -41,8 +41,6 @@ module.exports = {
     address: 'required|string',
     head: 'required|alpha_num',
     primaryContact: 'required|alpha_num',
-    newHead: 'alpha_num',
-    newPrimaryContact: 'alpha_num',
   },
   approveUser: {
     id: 'alpha_num',

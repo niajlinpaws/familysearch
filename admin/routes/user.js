@@ -443,6 +443,7 @@ router.post('/users/edit/data', FX.validate(vrules.addOrEditUser), async (req, r
       dateOfMarriage,
       contactNumber,
 	} = req.body;
+	const user = await User.findById(id);
     await User.updateOne(
 	  { _id: ObjectId(id) },
 	  {
@@ -454,6 +455,15 @@ router.post('/users/edit/data', FX.validate(vrules.addOrEditUser), async (req, r
 	    dateOfMarriage,
 	    contactNumber,
 		isApproved: false,
+		previousData: {
+		  ...user.previousData,
+		  name: user.name,
+          gender: user.gender,
+          occupation: user.occupation,
+          dateOfBirth: user.dateOfBirth,
+          dateOfMarriage: user.dateOfMarriage,
+          contactNumber: user.contactNumber,
+		},
 	  },
 	);
     res.json({ message: 'User edit successfully' });
@@ -464,18 +474,16 @@ router.post('/users/edit/data', FX.validate(vrules.addOrEditUser), async (req, r
 
 router.post('/users/edit/commonDetail', FX.validate(vrules.editCommonDetails), async (req, res, next) => {
   try {
-	const { head, primaryContact, newHead, newPrimaryContact, address, nativeAddress, email, gotra } = req.body;
-	const $set = {	
+	const { head, primaryContact, address, nativeAddress, email, gotra } = req.body;
+	const $set = {
+	  head,
+	  primaryContact,
 	  address,
 	  nativeAddress,
 	  email,
 	  gotra,
+	  isCommonDetailApproved: false,
 	};
-	const isHeadChanged = newHead && (`${newHead}` !== `${head}`);
-	const isPrimaryContactChanged = newPrimaryContact && (`${newPrimaryContact}` !== `${primaryContact}`);
-	if(isHeadChanged || isPrimaryContactChanged) {
-	  $set.isCommonDetailApproved = false;
-	}
     if (req.files && Object.keys(req.files).length === 1) {
       const { picture } = req.files;
       const random = FX.randomNumber(6, '');
@@ -483,14 +491,23 @@ router.post('/users/edit/commonDetail', FX.validate(vrules.editCommonDetails), a
       $set.picture = fileName;
       await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
     }
+	const user = await User.findById(primaryContact);
 	await User.updateMany(
       { primaryContact },
       {
         $set: {
           ...$set,
-		  ...(isHeadChanged && { head: newHead }),
-          ...(isPrimaryContactChanged && { primaryContact: newPrimaryContact }),
-        }
+		  previousData: {
+			...user.previousData,
+            head: user.head,
+	        primaryContact: user.primaryContact,
+	        address: user.address,
+	        nativeAddress: user.nativeAddress,
+	        email: user.email,
+	        gotra: user.gotra,
+			picture: user.picture,
+		  },
+        },
 	  },
 	);
     res.json({ message: 'Common details updated successfully' });
@@ -519,13 +536,13 @@ router.get('/users/view/:id', async (req, res, next) => {
 		  isAdmin: false,
 		}).lean()).map(user => {
             const userId = `${user._id}`;
-            if (userId === `${user.primaryContact}`) {
+            if (userId === `${(user.isApproved || user.isCommonDetailApproved) ? user.primaryContact : user.previousData.primaryContact}`) {
               user.isPrimary = true;
             }
-            if (userId === `${user.head}`) {
+            if (userId === `${(user.isApproved || user.isCommonDetailApproved) ? user.head: user.previousData.head}`) {
               user.isHead = true;
             }
-            return user;
+            return { ...user, ...user.previousData };
         }),
 	  };
 	}
