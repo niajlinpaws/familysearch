@@ -393,6 +393,11 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 	        primaryContact: primaryContactId,
 	        head: headId || primaryContactId,
 			address: addressToUpdate,
+			previousData: {
+			  primaryContact: primaryContactId,
+	          head: headId || primaryContactId,
+			  address: addressToUpdate,
+			},
           },
         },
       );
