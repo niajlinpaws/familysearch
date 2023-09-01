@@ -69,7 +69,7 @@ router.get('/users/:contactNumber?', FX.Auth, async (req, res, next) => {
   }
 });
 
-router.post('/users/find/:contactNumber?', FX.Auth, async (req, res, next) => {
+router.post('/users/find/:contactNumber?', async (req, res, next) => {
   try {
     const { isAdmin } = req.session.user;
     const { contactNumber } = req.params;
