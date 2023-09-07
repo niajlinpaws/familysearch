@@ -13,6 +13,7 @@ module.exports = {
   snsUserTopic: process.env.SNS_USER_TOPIC,
   snsBusinessTopic: process.env.SNS_BUSINESS_TOPIC,
   adminPort: process.env.ADMIN_PORT,
+  port: process.env.PORT,
   smtpFrom : process.env.SMTP_FROM,
   smtpHost : process.env.SMTP_HOST,
   smtpService : process.env.SMTP_SERVICE,

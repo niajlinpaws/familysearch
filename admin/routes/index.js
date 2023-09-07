@@ -46,7 +46,10 @@ router.post('/login', FX.validate(vrules.login, 'login.html'), async (req, res, 
       req.session.regenerate(() => {
         req.session.user = primaryContact;
         req.flash('success', 'welcome');
-        return res.redirect(`https://contactbook-niajlinpaws.vercel.app/contact/${primaryContact._id}`);
+        return res.redirect(
+          primaryContact.isAdmin ? '/admin/users'
+            : `https://contactbook-niajlinpaws.vercel.app/contact/${primaryContact._id}`
+        );
       });
     });
   } catch(err) {

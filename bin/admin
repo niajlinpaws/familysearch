@@ -9,7 +9,7 @@ const http = require('http');
 const mongoose = require('mongoose');
 
 const app = require('../admin');
-const { adminPort, mongoUri } = require('../config/constants');
+const { adminPort, mongoUri, port: portFromEnv } = require('../config/constants');
 
 /**
  * Connect to the DB function
@@ -30,7 +30,7 @@ const connectDB = async () => {
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(adminPort || '3000');
+const port = normalizePort(portFromEnv || adminPort || '3000');
 app.set('port', port);
 
 /**

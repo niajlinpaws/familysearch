@@ -71,18 +71,20 @@ router.get('/users/:contactNumber?', FX.Auth, async (req, res, next) => {
 
 router.post('/users/find/:contactNumber?', async (req, res, next) => {
   try {
-    const { isAdmin } = req.session.user;
-    const { contactNumber } = req.params;
-    const { length, start } = req.body;
+    const { isAdmin } = req.session.user || {};
+    const { contactNumber = '' } = req.params || {};
+    const { length = 0, start = 0 } = req.body;
     const sort = {};
     const search_query = {};
-    const search_arr = isAdmin && !contactNumber ? [
+    const search_arr = 
+	// isAdmin && !contactNumber ? [
     //   'head.name',
-  	  'primaryContact.name',
-  	  'primaryContact.contactNumber',
-  	  'address',
-    ]
-    : [
+  	//   'primaryContact.name',
+  	//   'primaryContact.contactNumber',
+  	//   'address',
+    // ]
+    // : 
+	[
       'name',
       'gender',
       'occupation',
@@ -91,6 +93,7 @@ router.post('/users/find/:contactNumber?', async (req, res, next) => {
       'contactNumber',
       'address',
       'head.name',
+      'primaryContact.name',
       'primaryContact.contactNumber',
     ];
     const sort_arr = isAdmin && !contactNumber ? [
@@ -114,19 +117,22 @@ router.post('/users/find/:contactNumber?', async (req, res, next) => {
       'head.name',
       'primaryContact.contactNumber',
     ];
-    const query = { isArchive: false, isAdmin: false };
+    const query = { isArchive: false, isAdmin: false, };
 	let search_value = req.body['search[value]'];
-	if (search_value && (!isAdmin || contactNumber)) {
-	  query.isApproved = true;
-	}
+	// if (search_value && (!isAdmin || contactNumber)) {
+	//   query.isApproved = true;
+	// }
 	if (!search_value && (!isAdmin || contactNumber)) {
-	  search_value = contactNumber || req.session.user.contactNumber;
+	  search_value = contactNumber;
 	}
     const sort_key = sort_arr[parseInt(req.body['order[0][column]'])];
     const sort_val = req.body['order[0][dir]'] === 'asc' ? 1: -1;
     const limit = parseInt(length) > 0 ? parseInt(length): '';
     sort[sort_key] = sort_val;
 
+	const equalToCondition = (condition, onTrue, onFalse) => ({ $cond: [{ $eq: [condition, true] }, onTrue, onFalse] });
+	const commonDetailsApprovalCheck = key => ['$isCommonDetailsApproved', `$${key}`, `$previousData.${key}`];
+	const approvalCheck = key => ['$isApproved', `$${key}`, `$previousData.${key}`];
 	const userAggregate = userAggregatePipeline => User.aggregate(userAggregatePipeline);
 	const match = { $match: query };
 	const lookupAndUnwind = [
@@ -150,52 +156,80 @@ router.post('/users/find/:contactNumber?', async (req, res, next) => {
 	  { $unwind: '$head' },
 	];
 	const group = {
-	  $group: {
-	    _id: '$primaryContact',
-	    head: { $first: '$head' },
-	    primaryContact: { $first: '$primaryContact' },
-	    address: { $first: '$address' },
-	    totalMembers:{ $sum: 1 },
-	    totalApprovedMembers: {
-	      $sum: {
-	        $cond: [{ $eq: ['$isApproved', true] }, 1, 0],
-	      },
-	    },
-	    totalUnapprovedMembers: {
-	      $sum: {
-	        $cond: [{ $eq: ['$isApproved', false] }, 1, 0],
-	      },
-	    },
+      $group: {
+        _id: '$primaryContact',
+        head: { $first: equalToCondition(...commonDetailsApprovalCheck('head')) },
+        primaryContact: { $first: equalToCondition(...commonDetailsApprovalCheck('primaryContact')) },
+        address: { $first: equalToCondition(...commonDetailsApprovalCheck('address')) },
+        nativeAddress: { $first: equalToCondition(...commonDetailsApprovalCheck('nativeAddress')) },
+        email: { $first: equalToCondition(...commonDetailsApprovalCheck('email')) },
+        gotra: { $first: equalToCondition(...commonDetailsApprovalCheck('gotra')) },
+        picture: { $first: equalToCondition(...commonDetailsApprovalCheck('picture')) },
+        totalMembers:{ $sum: 1 },
+        isCommonDetailsApproved: { $first: '$isCommonDetailsApproved' },
+        totalApprovedMembers: {
+          $sum: {
+            $cond: [{ $eq: ['$isApproved', true] }, 1, 0],
+          },
+        },
+        totalUnapprovedMembers: {
+          $sum: {
+            $cond: [{ $eq: ['$isApproved', false] }, 1, 0],
+          },
+        },
+        users: {
+          $push: {
+            _id: '$_id',
+            name: equalToCondition(...approvalCheck('name')),
+            gender: equalToCondition(...approvalCheck('gender')),
+            occupation: equalToCondition(...approvalCheck('occupation')),
+            contactNumber: equalToCondition(...approvalCheck('contactNumber')),
+            dateOfBirth: { $dateToString: { format: '%d-%m-%Y', date: equalToCondition(...approvalCheck('dateOfBirth')) } },
+            dateOfMarriage: { $dateToString: { format: '%d-%m-%Y', date: equalToCondition(...approvalCheck('dateOfMarriage')) } },
+            isApproved: '$isApproved',
+          },
+        },
 	  },
 	};
 	const project = {
-	  $project: isAdmin && !contactNumber ? {
-	    _id: '$_id._id',
+	  $project: 
+	//   isAdmin && !contactNumber ? 
+	  {
+	    _id: 1,
 	    address: 1,
-	    // 'head._id': 1,
-	    // 'head.name': 1,
+	    'head._id': 1,
+	    'head.name': 1,
+	    'head.gender': 1,
 	    'primaryContact._id': 1,
 	    'primaryContact.name': 1,
 	    'primaryContact.contactNumber': 1,
+	    'primaryContact.gender': 1,
 	    totalMembers: 1,
 	    totalApprovedMembers: 1,
 	    totalUnapprovedMembers: 1,
-	  } : {
-		_id: 1,
+        gotra: 1,
+        nativeAddress: 1,
+        email: 1,
 		picture: 1,
-		name: 1,
-        gender: 1,
-        occupation: 1,
-		dateOfBirth: { $dateToString: { format: '%d-%m-%Y', date: '$dateOfBirth' } },
-		dateOfMarriage: { $dateToString: { format: '%d-%m-%Y', date: '$dateOfMarriage' } },
-        contactNumber: 1,
-        address: 1,
-        'head._id': 1,
-	    'head.name': 1,
-	    'primaryContact._id': 1,
-	    'primaryContact.contactNumber': 1,
-		isApproved: 1,
+		isCommonDetailsApproved: 1,
+		users: 1,
 	  },
+	//   : {
+	// 	_id: 1,
+	// 	picture: 1,
+	// 	name: 1,
+    //     gender: 1,
+    //     occupation: 1,
+	// 	dateOfBirth: { $dateToString: { format: '%d-%m-%Y', date: '$dateOfBirth' } },
+	// 	dateOfMarriage: { $dateToString: { format: '%d-%m-%Y', date: '$dateOfMarriage' } },
+    //     contactNumber: 1,
+    //     address: 1,
+    //     'head._id': 1,
+	//     'head.name': 1,
+	//     'primaryContact._id': 1,
+	//     'primaryContact.contactNumber': 1,
+	// 	isApproved: 1,
+	//   },
 	};
 	const count = {
 	  $group: {
@@ -233,14 +267,15 @@ router.post('/users/find/:contactNumber?', async (req, res, next) => {
 	    }
   	  });
 	  userAggregatePipeline.push(match, ...lookupAndUnwind, { $match: search_query });
-	  if (isAdmin && !contactNumber) {
+	  if (isAdmin || contactNumber) {
         userAggregatePipeline.push(group);
 	  }
     }
 
 	if (!search_value) {
-	  isAdmin && !contactNumber ? userAggregatePipeline.push(match, group)
-	    : userAggregatePipeline.push(match);
+	  userAggregatePipeline.push(match, group);
+	//   isAdmin && !contactNumber ? userAggregatePipeline.push(match, group)
+	//     : userAggregatePipeline.push(match);
 	}
 
 	const recordsFiltered = (await userAggregate(userAggregatePipeline.concat(count)))[0];
@@ -302,7 +337,7 @@ router.post('/users/check', async (req, res, next) => {
   }
 });
 
-router.post('/users/add/:contactNumber?', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'), async (req, res, next) => {
+router.post('/users/add', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'), async (req, res, next) => {
   try {
     const { isAdmin, primaryContact } = req.session.user;
     if (!isAdmin) {
@@ -330,6 +365,29 @@ router.post('/users/add/:contactNumber?', FX.Auth, FX.validate(vrules.addOrEditU
       );
     }
     res.redirect('/admin/users');
+  } catch(err) {
+    next(err);
+  }
+});
+
+router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, res, next) => {
+  try {
+    const { primaryContact } = req.body;
+    const user = await User.findById(primaryContact);
+	if (!user) return res.json({ message: 'Primary contact not found' });
+    await User.create({
+	  ...req.body,
+	  primaryContact,
+	  head: user.head,
+	  address: user.address,
+	  gotra: user.gotra,
+      nativeAddress: user.nativeAddress,
+      email: user.email,
+	  password: bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10)),
+	  isApproved: false,
+	  isCommonDetailApproved: false,
+	});
+    res.json({ message: 'User added successfully' });
   } catch(err) {
     next(err);
   }

@@ -19,6 +19,7 @@ module.exports = {
     dateOfBirth: 'required|date',
     dateOfMarriage: 'date',
     contactNumber: 'string|size:10',
+    primaryContact: 'alpha_num',
   },
   registerPrimaryContactAndUsers: {
     'users.*.isPrimary': 'boolean',
