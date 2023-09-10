@@ -89,16 +89,22 @@ router.post('/users/find', async (req, res, next) => {
     // ]
     // : 
 	: [
-      'name',
+	  'name',
       'gender',
       'occupation',
       'dateOfBirth',
       'dateOfMarriage',
       'contactNumber',
       'address',
+	  'nativeAddress',
+	  'email',
+	  'gotra',
       'head.name',
+      'head.contactNumber',
+	  'head.occupation',
       'primaryContact.name',
       'primaryContact.contactNumber',
+	  'primaryContact.occupation',
     ];
     const sort_arr = isAdmin && !contactNumber ? [
   	  'primaryContact.contactNumber',
@@ -334,8 +340,11 @@ router.post('/users/find/gotra/:gotra?', async (req, res, next) => {
 	  'email',
 	  'gotra',
       'head.name',
+      'head.contactNumber',
+	  'head.occupation',
       'primaryContact.name',
       'primaryContact.contactNumber',
+	  'primaryContact.occupation',
     ];
     const sort_arr = gotra ? [
 	  'name',
@@ -836,7 +845,11 @@ router.post('/users/edit/commonDetail', FX.validate(vrules.editCommonDetails), a
 
 router.get('/users/delete/:id', async (req, res, next) => {
   try {
-    await User.updateOne({ _id: new ObjectId(req.params.id) }, { $set:{ isArchive: true } });
+	const { isAdmin } = req.session.user;
+    await User.updateOne(
+	  { _id: new ObjectId(req.params.id) },
+      { $set:{ [isAdmin ? 'isArchive' : 'isApproved']: true } },
+	);
 	res.status(200).json({ message:`user deleted` });
   } catch(err) {
 	next(err);

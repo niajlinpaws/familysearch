@@ -66,6 +66,7 @@ app.use(session({
 app.use(flash());
 app.use(fileUpload({
   limits: { fileSize: 1 * 1024 * 1024 },
+  createParentPath: true,
   useTempFiles : true,
   tempFileDir : tempUploadPath,
   safeFileNames: true,
