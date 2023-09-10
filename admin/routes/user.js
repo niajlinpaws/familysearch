@@ -575,15 +575,17 @@ router.post('/users/add', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'
       req.body.picture = fileName;
       await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
     }
-    const { _id } = await User.create(req.body);
+    const { _id, email, dateOfBirth } = await User.create(req.body);
     if (isAdmin) {
+	  const [, month, day] = new Date(dateOfBirth).toISOString().slice(0, 10).split('-');
+	  const password = email.slice(0, 1).toUpperCase() + email.slice(1, 4) + day + month + '#';
       await User.updateOne(
         { _id },
         {
           $set: {
             primaryContact: _id,
             head: _id,
-            password: bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10)),
+            password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)),
             isApproved: true,
           },
         },
@@ -597,9 +599,11 @@ router.post('/users/add', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'
 
 router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, res, next) => {
   try {
-    const { primaryContact } = req.body;
+    const { primaryContact, dateOfBirth } = req.body;
     const user = await User.findById(primaryContact);
 	if (!user) return res.json({ message: 'Primary contact not found' });
+	const [, month, day] = new Date(dateOfBirth).toISOString().slice(0, 10).split('-');
+	const password = user.email.slice(0, 1).toUpperCase() + user.email.slice(1, 4) + day + month + '#';
     await User.create({
 	  ...req.body,
 	  primaryContact,
@@ -608,7 +612,7 @@ router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, re
 	  gotra: user.gotra,
       nativeAddress: user.nativeAddress,
       email: user.email,
-	  password: bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10)),
+	  password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)),
 	  isApproved: false,
 	  isCommonDetailApproved: false,
 	});
@@ -661,7 +665,9 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 	    await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
 	  }
 	  if (isPrimary) {
-	    user.password = bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10));
+		const [, month, day] = new Date(user.dateOfBirth).toISOString().slice(0, 10).split('-');
+		const password = user.email.slice(0, 1).toUpperCase() + user.email.slice(1, 4) + day + month + '#';
+	    user.password = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
 	    addressToUpdate = user.address;
 		nativeAddressToUpdate = user.nativeAddress;
 		emailToUpdate = user.email;
