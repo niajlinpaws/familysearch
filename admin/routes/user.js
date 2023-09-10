@@ -868,7 +868,7 @@ router.post('/users/adminNotify/:id',FX.adminAuth,function(req,res,next){
 router.post('/users/approve', FX.Auth, FX.validate(vrules.approveUser, 'user.html'), async (req, res, next) => {
   try {
     const { id, isApproved } = req.body;
-    await User.updateOne({ _id: new ObjectId(id) }, { $set:{ isApproved } });
+    await User.updateOne({ _id: new ObjectId(id) }, { $set:{ isApproved, 'previousData.isApprovedAfterRegistration': true } });
     res.status(200).json({ message: `approved changed ${isApproved}` });
   } catch(err) {
 	next(err);
