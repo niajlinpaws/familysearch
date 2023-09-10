@@ -615,6 +615,15 @@ router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, re
 	  password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)),
 	  isApproved: false,
 	  isCommonDetailApproved: false,
+	  previousData: {
+		isApprovedAfterRegistration: false,
+		primaryContact,
+		head: user.head,
+		address: user.address,
+		nativeAddress: user.nativeAddress,
+		email: user.email,
+		gotra: user.gotra,
+	  },
 	});
     res.json({ message: 'User added successfully' });
   } catch(err) {
