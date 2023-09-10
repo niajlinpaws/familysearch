@@ -15,13 +15,40 @@
             <div class="card data-tables">
               <div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
                 <div class="toolbar">
-                  <!-- <div class="btn-group">
-                    &nbsp;&nbsp;&nbsp;
-                    <button class="btn btn-icon btn-danger add" data-toggle="modal" data-target="#addFamilyUser">
-                      <i class="fa fa-plus"></i> Add {{ 'Primary Contact ' if user.isAdmin else '' }}User
-                    </button>
+                  <div class="btn-group">
+                    <div class="row">
+                      <div class="col-12 col-sm-4">
+                        {{form.form_group_picker('From', 'datetimepicker', 'fromDate', body.fromDate, '')}}
+                       </div>
+                      <div class="col-12 col-sm-4">
+                        {{form.form_group_picker('To', 'datetimepicker', 'toDate', body.toDate, '')}}
+                      </div>
+                      <div class="col-12 col-sm-4">
+                        <div class="form-group has-label">
+                          <label>
+                            Search Fields
+                            <!-- <star class="star">*</star> -->
+                          </label>
+                          <select multiple name="searchFields" class="selectpicker" data-title="Select fields" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" data-size="5">
+                            <option value="name">Name</option>
+                            <option value="gender">Gender</option>
+                            <option value="occupation">Occupation</option>
+                            <option value="dateOfBirth">Date of birth</option>
+                            <option value="dateOfMarriage">Date of marriage</option>
+                            <option value="contactNumber">Contact number</option>
+                            <option value="address">Address</option>
+                            <option value="nativeAddress">Native address</option>
+                            <option value="email">Email</option>
+                            <option value="gotra">Gotra</option>
+                            <option value="head.name">Head name</option>
+                            <option value="primaryContact.name">Primary contact name</option>
+                            <option value="primaryContact.contactNumber">Primary contact number</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <br /><br /> -->
+                  <br /><br />
                   {% if user.isAdmin %}
                   <h4 class="text-center">Click On A Row To View Details</h4>
                   <br /><br />
@@ -413,6 +440,12 @@
       ajax: {
         url: '{{admin_url}}users/find',
         type: 'POST',
+        data: d => {
+          d.fromDate = $('[name="fromDate"]').val();
+          d.toDate = $('[name="toDate"]').val();
+          d.searchFields = $('[name="searchFields"]').val().join(',');
+          return d;
+        },
         dataSrc: json => {
           const search = userTable.search();
           // $(document).ready(() => {
@@ -497,6 +530,8 @@
     });
     userTable.column(0).visible(false);
 
+    $('[name="fromDate"], [name="toDate"]').on('dp.change', () => userTable.draw());
+
     const familyMembersTable = $('#familyMembersTable').DataTable({
       pagingType: 'full_numbers',
       lengthMenu: [
@@ -532,7 +567,7 @@
           });
           // console.log(json.data)
 
-          const arr = json.data.reduce((
+          const arr = json.data[0].users.reduce((
             arr,
             {
               isApproved,
@@ -555,11 +590,11 @@
               s_no: `<span style="display:none">${_id}</span>`,
               // picture: `<img src="${picture ? '{{image_url}}' + picture : '{{image_base}}'}" width="80"><span style="display:none">${_id}</span>`,
               name: `${name}<span style="display:none">${_id}</span>`,
-              gender,
+              gender: gender || '',
               occupation: occupation || '',
               dateOfBirth,
               dateOfMarriage: dateOfMarriage || '',
-              contactNumber,
+              contactNumber: contactNumber || '',
               status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='primary' data-off-color='primary' data-on-text='' data-off-text=''>`,
               // actions: search ? '' : '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editUser" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/' + _id + '","user","{{admin_url}}users") href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>',
               noUse: ''

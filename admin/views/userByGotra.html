@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+{% import "macros/head.html" as head %}
+{{head.title('Contactbook')}}
+
+<body>
+  <div class="wrapper">
+    {% include "partials/sidebar.html" %}
+    {% include "partials/navbar.html" %}
+    {% import "macros/forms.html" as form %}
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card data-tables">
+              <div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+                <div class="toolbar justify-content-center">
+                  <div class="btn-group">
+                    <div class="row">
+                      <div class="col-12 col-sm-4">
+                        {{form.form_group_picker('From', 'datetimepicker', 'fromDate', body.fromDate, '')}}
+                       </div>
+                      <div class="col-12 col-sm-4">
+                        {{form.form_group_picker('To', 'datetimepicker', 'toDate', body.toDate, '')}}
+                      </div>
+                      <div class="col-12 col-sm-4">
+                        <div class="form-group has-label">
+                        <label>
+                            Search Fields
+                            <!-- <star class="star">*</star> -->
+                        </label>
+                        <select multiple name="searchFields" class="selectpicker" data-title="Select fields" data-style="btn-default btn-outline" data-menu-style="dropdown-blue" data-size="5">
+                            <option value="name">Name</option>
+                            <option value="gender">Gender</option>
+                            <option value="occupation">Occupation</option>
+                            <option value="dateOfBirth">Date of birth</option>
+                            <option value="dateOfMarriage">Date of marriage</option>
+                            <option value="contactNumber">Contact number</option>
+                            <option value="address">Address</option>
+                            <option value="nativeAddress">Native address</option>
+                            <option value="email">Email</option>
+                            <option value="gotra">Gotra</option>
+                            <option value="head.name">Head name</option>
+                            <option value="primaryContact.name">Primary contact name</option>
+                            <option value="primaryContact.contactNumber">Primary contact number</option>
+                        </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <br /><br />
+                  {% if user.isAdmin %}
+                  <h4 class="text-center">Click On A Row To View Details</h4>
+                  <br /><br />
+                  {% endif %}
+                </div>
+                <div class="fresh-datatables">
+                  <table id="userTable" class="table table-striped table-no-bordered table-hover" cellspacing="0"
+                    width="100%">
+                    <thead>
+                      <tr>
+                        <th>S.No</th>
+                        <th>Gotra</th>
+                        <th>Total Members</th>
+                        <th data-sortable="false"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Members BY Gotra Table Modal -->
+  <div class="modal fade modal-primary" id="gotraUserTable" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <!-- <div class="row"> -->
+            <!-- <div style="" class="col-sm-3"> -->
+              <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+            <!-- </div> -->
+            <!-- <div class="col-sm-9">
+            </div> -->
+          <!-- </div> -->
+        </div>
+        <div class="modal-body">
+          <div style="border: none;" class="card card-info justify-content-center">
+            <div class="card-header no-padding justify-content-center">
+              <div class="view justify-content-center"></div>
+            </div>
+            <div class="card-body">
+              <div class="card data-tables">
+                <div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
+                  <div class="toolbar">
+                    <div class="btn-group">
+                    </div>
+                  </div>
+                  <div class="fresh-datatables">
+                    <table id="membersByGotraTable" class="table table-striped table-no-bordered table-hover" cellspacing="0"
+                      width="100%">
+                      <thead>
+                        <tr>
+                          <th>S.No</th>
+                          <th>Name</th>
+                          <th>Gender</th>
+                          <th>Occupation</th>
+                          <th>Date Of Birth</th>
+                          <th>Date Of Marriage</th>
+                          <th>Contact Number</th>
+                          <th>Primary Contact Number</th>
+                          <th>Primary Contact Name</th>
+                          <th>Head Name</th>
+                          <th>Address</th>
+                          <th>Native Address</th>
+                          <th>Email</th>
+                          <!-- <th data-sortable="false">Status</th> -->
+                          <th data-sortable="false"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- <div class="modal-footer">
+        <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
+      </div> -->
+    </div>
+  </div>
+  <!--  End Modal -->
+</body>
+<script>
+  /*For inlcuding variables at the top*/
+  let message;
+</script>
+{% include "partials/core_js.html" %}
+{% import "macros/plugins.html" as plugins %}
+{{plugins.script('bootstrap-switch')}}
+{{plugins.script('sweetalert2.min')}}
+{{plugins.script('bootstrap-tagsinput')}}
+{{plugins.script('jquery.validate.min')}}
+{{plugins.script('jquery.dataTables.min')}}
+{{plugins.script('dropzone')}}
+{{plugins.script('light-bootstrap-dashboard')}}
+{{plugins.script('bootstrap-selectpicker')}}
+{{plugins.script('moment.min')}}
+{{plugins.script('bootstrap-datetimepicker')}}
+{{plugins.script('demo')}}
+{% include "partials/validation.html" %}
+{% include "partials/functions.html" %}
+<script>
+  $(document).ready(function () {
+    {% if error_flash %}
+    demo.showNotification('top', 'center', '{{ error_flash }}', 'danger', 'nc-icon');
+    {% endif %}
+
+    {% if messages.error %}
+    demo.showNotification('top', 'center', '{{ error_flash }}', 'danger', 'nc-icon');
+    {% endif %}
+
+    const noWidthColumns = ['s_no', 'noUse'];
+    let columns = [
+      's_no',
+      'gotra',
+      'totalMembers',
+      'noUse',
+    ];
+
+    const userTable = $('#userTable').DataTable({
+      pagingType: 'full_numbers',
+      lengthMenu: [
+        [10, 25, 50, -1],
+        [10, 25, 50, 'All'],
+      ],
+      aaSorting: [[0, 'asc']],
+      language: {
+        search: '_INPUT_',
+        searchPlaceholder: "Search {{ 'Approved' if not user.isAdmin else ''}} Records",
+      },
+      processing: true,
+      serverSide: true,
+    //   responsive: true,
+      ajax: {
+        url: '{{admin_url}}users/find/gotra',
+        type: 'POST',
+        data: d => {
+          d.fromDate = $('[name="fromDate"]').val();
+          d.toDate = $('[name="toDate"]').val();
+          d.searchFields = $('[name="searchFields"]').val().join(',');
+          return d;
+        },
+        dataSrc: json => {
+          const arr = json.data.reduce((
+            arr,
+            { _id, totalMembers }
+          ) => {
+            const jsonData = {
+              s_no: `<span style="display:none">${_id}</span>`,
+              gotra: _id,
+              totalMembers,
+            //   noUse: `<span style="display:none">${JSON.stringify(users)}</span>`,
+              noUse: '',
+            };
+
+            arr.push(jsonData);
+            return arr;
+          }, []);
+          
+          //Make your callback here.
+          return arr;
+        }
+      },
+      columns: columns.map((column, _, columns) => {
+        if (noWidthColumns.includes(column)) return { data: column };
+        return { data: column, width: `${100 / (columns.length - noWidthColumns.length)}%` };
+      }),
+    });
+    userTable.column(0).visible(false);
+
+    $('[name="fromDate"], [name="toDate"]').on('dp.change', () => userTable.draw());
+
+    const membersByGotraTable = $('#membersByGotraTable').DataTable({
+      pagingType: 'full_numbers',
+      lengthMenu: [
+        [10, 25, 50, -1],
+        [10, 25, 50, 'All']
+      ],
+      aaSorting: [[0, 'desc']],
+      language: {
+        search: '_INPUT_',
+        searchPlaceholder: 'Search records',
+      },
+      processing: true,
+      serverSide: true,
+      responsive: true,
+      ajax: {
+        url: '{{admin_url}}users/find/gotra',
+        type: 'POST',
+        dataSrc: json => {
+          const arr = json.data.reduce((
+            arr,
+            {
+              _id,
+              name,
+              gender,
+              occupation,
+              dateOfBirth,
+              dateOfMarriage,
+              contactNumber,
+              head,
+              primaryContact,
+              address,
+              nativeAddress,
+              email,
+            }
+          ) => {
+            const jsonData = {
+              s_no: `<span style="display:none">${_id}</span>`,
+              name,
+              gender,
+              occupation,
+              dateOfBirth,
+              dateOfMarriage,
+              contactNumber,
+              primaryContactNumber: primaryContact.contactNumber,
+              primaryContactName: primaryContact.name,
+              headName: head.name,
+              address,
+              nativeAddress,
+              email,
+              gotra: _id,
+            //   noUse: `<span style="display:none">${JSON.stringify(users)}</span>`,
+              noUse: '',
+            };
+
+            arr.push(jsonData);
+            return arr;
+          }, []);
+          
+          //Make your callback here.
+          return arr;
+        }
+      },
+      columns: [
+        's_no',
+        'name',
+        'gender',
+        'occupation',
+        'dateOfBirth',
+        'dateOfMarriage',
+        'contactNumber',
+        'primaryContactName',
+        'primaryContactNumber',
+        'headName',
+        'address',
+        'nativeAddress',
+        'email',
+        // 'status',
+        'noUse',
+      ].map((column, _, columns) => {
+        if (noWidthColumns.includes(column)) return { data: column };
+        return { data: column, width: `${100 / 2}%` };
+      }),
+    });
+    membersByGotraTable.column(0).visible(false);
+
+    $(document).on('click', "#userTable td", function () {
+      const children = $(this).parent().children();
+      const gotra = children.eq(0).html();
+      const totalMembers = children.eq(1).html();
+    //   const users = JSON.parse(children.eq(2).find('span').html());
+      $('#gotraUserTable  .view').html('');
+      $('#gotraUserTable .view').append(`
+        <div class="row justify-content-center">
+          <h5 class="col-sm-12">Showing users for</h5>
+        </div>
+        <div class="row">
+          <label class="col-sm-12">Gotra: ${gotra}</label>
+        </div>
+      `);
+      membersByGotraTable.ajax
+      .url('{{admin_url}}users/find/gotra/'+gotra)
+      .load();
+      membersByGotraTable.draw();
+    //   membersByGotraTable.clear().rows.add(users.map(({
+    //     name,
+    //     gender,
+    //     occupation,
+    //     dateOfBirth,
+    //     dateOfMarriage,
+    //     contactNumber,
+    //     primaryContact: { name: primaryContactName, contactNumber: primaryContactNumber},
+    //   }) => ({
+    //     s_no: '',
+    //     name,
+    //     gender,
+    //     occupation,
+    //     dateOfBirth,
+    //     dateOfMarriage,
+    //     contactNumber,
+    //     primaryContactName,
+    //     primaryContactNumber,
+    //     noUse: '',
+    //   }))).draw();
+      $('#gotraUserTable').modal('show');
+    });
+  });
+</script>
+
+</html>
