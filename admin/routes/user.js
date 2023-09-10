@@ -53,7 +53,7 @@ router.get('/users/csv',FX.adminAuth,(req,res,next)=>{
 	});
 });
 
-router.get('/users/:contactNumber?', FX.Auth, async (req, res, next) => {
+router.get('/users', FX.Auth, async (req, res, next) => {
   try {
     const users = await User.find({
   	  isArchive: false,
@@ -69,7 +69,7 @@ router.get('/users/:contactNumber?', FX.Auth, async (req, res, next) => {
   }
 });
 
-router.post('/users/find/:contactNumber?', async (req, res, next) => {
+router.post('/users/find', async (req, res, next) => {
   try {
     const { isAdmin } = req.session.user || {};
     const { contactNumber = '' } = req.params || {};
@@ -398,7 +398,7 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 	return res.json({ message: 'contactNumber field is required for primary contact user' });
   }
   try {
-	let primaryContactId, headId, addressToUpdate;
+	let primaryContactId, headId, addressToUpdate, nativeAddressToUpdate, emailToUpdate, gotraToUpdate;
 	const idsToUpdate = [];
 	await Promise.all(req.body.users.map(async ({
 	  isPrimary,
@@ -411,6 +411,8 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 	  dateOfMarriage,
 	  contactNumber,
 	  address,
+	  nativeAddress,
+	  email,
 	}) => {
 	  const user = {
         isPrimary,
@@ -418,10 +420,13 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
         name,
         gender,
         occupation,
-        gotra,
+        gotra: gotra.toUpperCase(),
         dateOfBirth,
         dateOfMarriage,
         contactNumber,
+		address,
+		nativeAddress,
+		email,
       };
 	  if ((req.files && Object.keys(req.files).length === 1) && isPrimary) {
 	    const { picture } = req.files;
@@ -432,7 +437,10 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 	  }
 	  if (isPrimary) {
 	    user.password = bcrypt.hashSync(basePassword, bcrypt.genSaltSync(10));
-	    addressToUpdate = address;
+	    addressToUpdate = user.address;
+		nativeAddressToUpdate = user.nativeAddress;
+		emailToUpdate = user.email;
+		gotraToUpdate = user.gotra;
 	  }
 	  const { _id } = await User.create(user);
 	  idsToUpdate.push(_id);
@@ -451,10 +459,16 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 	        primaryContact: primaryContactId,
 	        head: headId || primaryContactId,
 			address: addressToUpdate,
+			nativeAddress: nativeAddressToUpdate,
+			email: emailToUpdate,
+			gotra: gotraToUpdate,
 			previousData: {
 			  primaryContact: primaryContactId,
 	          head: headId || primaryContactId,
 			  address: addressToUpdate,
+			  nativeAddress: nativeAddressToUpdate,
+			  email: emailToUpdate,
+			  gotra: gotraToUpdate,
 			},
           },
         },
@@ -544,7 +558,7 @@ router.post('/users/edit/commonDetail', FX.validate(vrules.editCommonDetails), a
 	  address,
 	  nativeAddress,
 	  email,
-	  gotra,
+	  gotra: gotra.toUpperCase(),
 	  isCommonDetailApproved: false,
 	};
     if (req.files && Object.keys(req.files).length === 1) {
