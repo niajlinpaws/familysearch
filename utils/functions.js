@@ -109,6 +109,9 @@ module.exports = {
   validate: (rulesObj, template) => {
     return (req, res, next) => {
       // Validating Input 
+      if (req?.body?.users) {
+        req.body.users = JSON.parse(req?.body?.users);
+      }
       const validation = new Validator(
 		    req.body,
 		    rulesObj,
