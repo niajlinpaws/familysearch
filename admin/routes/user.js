@@ -830,10 +830,11 @@ router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, re
       email: user.email,
 	  password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)),
 	  isApproved: false,
-	  isCommonDetailApproved: false,
+	  isCommonDetailsApproved: true,
 	  picture: user.picture,
 	  previousData: {
 		isApprovedAfterRegistration: false,
+		isCommonDetailsApprovedAfterRegistration: true,
 		primaryContact,
 		head: user.head,
 		address: user.address,
@@ -1042,8 +1043,8 @@ router.post('/users/edit/commonDetail', upload.single('picture'), FX.validate(vr
 	  address,
 	  nativeAddress,
 	  email,
-	  gotra: gotra.toUpperCase(),
-	  isCommonDetailApproved: false,
+	  gotra: gotra?.toUpperCase(),
+	  isCommonDetailsApproved: false,
 	};
     if ((req.files || req.file) && Object.keys((req.files || req.file)).length) {
 	  const fileName = await FX.uploadFile(req.file);
@@ -1148,15 +1149,15 @@ router.get('/users/view/:id', async (req, res, next) => {
 			  picture: 1,
 			  previousData: 1,
 			  isApproved: 1,
-			  isCommonDetailApproved: 1,
+			  isCommonDetailsApproved: 1,
 			},
 		  },
 	    ])).map(user => {
 		  const userId = `${user._id}`;
-		  if (userId === `${(user.isApproved || user.isCommonDetailApproved) ? user.primaryContact._id : user.previousData.primaryContact._id}`) {
+		  if (userId === `${(user.isApproved || user.isCommonDetailsApproved) ? user.primaryContact._id : user.previousData.primaryContact._id}`) {
 		    user.isPrimary = true;
 		  }
-		  if (userId === `${(user.isApproved || user.isCommonDetailApproved) ? user.head._id: user.previousData.head._id}`) {
+		  if (userId === `${(user.isApproved || user.isCommonDetailsApproved) ? user.head._id: user.previousData.head._id}`) {
 		    user.isHead = true;
 		  }
 		  // return { ...user, ...user.previousData };
