@@ -1378,12 +1378,12 @@ demo = {
 
     // Sweet Alerts
 
-    showSwal: function(type,path,element,reload) {
+    showSwal: function(type, path, message, reload) {
         if (type == 'basic') {
-            swal("Here's a message!");
+            swal(message);
 
         } else if (type == 'title-and-text') {
-            swal("Here's a message!", "It's pretty, isn't it?")
+            swal("Primary contact cannot be deleted!", "Please assign another user as primary contact and try again.")
 
         } else if (type == 'success-message') {
             swal("Good job!", "You clicked the button!", "success")
@@ -1391,7 +1391,7 @@ demo = {
         } else if (type == 'warning-message-and-confirmation') {
             swal({
                 title: "Are you sure?",
-                text: "You will not be able to recover this "+element,
+                text: "You will not be able to recover this " + message,
                 type: "warning",
                 showCancelButton: true,
                 confirmButtonClass: "btn btn-info btn-fill",

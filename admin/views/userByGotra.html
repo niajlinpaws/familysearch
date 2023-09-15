@@ -16,6 +16,7 @@
               <div class="card-body table-striped table-no-bordered table-hover dataTable dtr-inline table-full-width">
                 <div class="toolbar justify-content-center">
                   <div class="btn-group">
+                    &nbsp;&nbsp;&nbsp;
                     <div class="row">
                       <div class="col-12 col-sm-4">
                         {{form.form_group_picker('From', 'datetimepicker', 'fromDate', body.fromDate, '')}}
@@ -41,8 +42,11 @@
                             <option value="email">Email</option>
                             <option value="gotra">Gotra</option>
                             <option value="head.name">Head name</option>
+                            <option value="head.contactNumber">Head contact number</option>
+                            <option value="head.occupation">Head occupation</option>
                             <option value="primaryContact.name">Primary contact name</option>
                             <option value="primaryContact.contactNumber">Primary contact number</option>
+                            <option value="primaryContact.occupation">Primary contact occupation</option>
                         </select>
                         </div>
                       </div>
@@ -107,21 +111,21 @@
                       width="100%">
                       <thead>
                         <tr>
-                          <th>S.No</th>
-                          <th>Name</th>
-                          <th>Gender</th>
-                          <th>Occupation</th>
-                          <th>Date Of Birth</th>
-                          <th>Date Of Marriage</th>
-                          <th>Contact Number</th>
-                          <th>Primary Contact Number</th>
-                          <th>Primary Contact Name</th>
-                          <th>Head Name</th>
-                          <th>Address</th>
-                          <th>Native Address</th>
-                          <th>Email</th>
+                          <th class="all">S.No</th>
+                          <th class="all">Name</th>
+                          <th class="all">Gender</th>
+                          <th class="min-tablet">Occupation</th>
+                          <th class="min-tablet">Date Of Birth</th>
+                          <th class="min-desktop">Date Of Marriage</th>
+                          <th class="min-desktop">Contact Number</th>
+                          <th class="min-desktop">Primary Contact Number</th>
+                          <th class="min-desktop">Primary Contact Name</th>
+                          <th class="none">Head Name</th>
+                          <th class="none">Address</th>
+                          <th class="none">Native Address</th>
+                          <th class="none">Email</th>
                           <!-- <th data-sortable="false">Status</th> -->
-                          <th data-sortable="false"></th>
+                          <th class="all" data-sortable="false"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -311,7 +315,10 @@
         'noUse',
       ].map((column, _, columns) => {
         if (noWidthColumns.includes(column)) return { data: column };
-        return { data: column, width: `${100 / 2}%` };
+        return {
+          data: column,
+          // width: `${100 / 2}%`,
+        };
       }),
     });
     membersByGotraTable.column(0).visible(false);

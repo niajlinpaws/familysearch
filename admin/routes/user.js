@@ -2,13 +2,16 @@ const express = require('express');
 const { model, Types: { ObjectId } } = require('mongoose');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
 
 const FX = require('../../utils/functions');
 const vrules = require('../../validation');
-const { uploadPath, basePassword } = require('../../config/constants');
+const { uploadPath } = require('../../config/constants');
 
 const router = express.Router();
 const User = model('User');
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 const csv = {};
 
@@ -53,7 +56,9 @@ router.get('/users/csv',FX.adminAuth,(req,res,next)=>{
 	});
 });
 
-router.get('/users', FX.Auth, async (req, res, next) => {
+router.get('/users', FX.Auth, async (req, res) => res.render('user.html', { users: [] }));
+
+router.get('/users/family', FX.Auth, async (req, res, next) => {
   try {
     const users = await User.find({
   	  isArchive: false,
@@ -63,7 +68,7 @@ router.get('/users', FX.Auth, async (req, res, next) => {
 		{ _id: req.session.user._id },
 	  ],
     });
-	res.render('user.html', { users });
+	res.render('userByFamily.html', { users });
   } catch(err) {
 	next(err);
   }
@@ -171,15 +176,16 @@ router.post('/users/find', async (req, res, next) => {
 	const group = {
       $group: {
         _id: '$primaryContact',
-        head: { $first: isAdmin ? equalToCondition(...commonDetailsApprovalCheck('head')) : '$head' },
-        primaryContact: { $first: isAdmin ? equalToCondition(...commonDetailsApprovalCheck('primaryContact')) : '$primaryContact' },
-        address: { $first: isAdmin ? equalToCondition(...commonDetailsApprovalCheck('address')) : '$address' },
-        nativeAddress: { $first: isAdmin ? equalToCondition(...commonDetailsApprovalCheck('nativeAddress')) : '$nativeAddress' },
-        email: { $first: isAdmin ? equalToCondition(...commonDetailsApprovalCheck('email')) : '$email' },
-        gotra: { $first: isAdmin ? equalToCondition(...commonDetailsApprovalCheck('gotra')) : '$gotra' },
-        picture: { $first: isAdmin ? equalToCondition(...commonDetailsApprovalCheck('picture')) : '$picture' },
+        head: { $first: '$head' },
+        primaryContact: { $first: '$primaryContact' },
+        address: { $first: '$address' },
+        nativeAddress: { $first: '$nativeAddress' },
+        email: { $first: '$email' },
+        gotra: { $first: '$gotra' },
+        picture: { $first: '$picture' },
         totalMembers:{ $sum: 1 },
         isCommonDetailsApproved: { $first: '$isCommonDetailsApproved' },
+		previousData: isAdmin ? { $first: '$previousData' } : { $first: { $cond: [{ $eq: ['$previousData.isCommonDetailsApprovedAfterRegistration', true] }, '$previousData', '$_id'] } },
         totalApprovedMembers: {
           $sum: {
             $cond: [{ $eq: ['$isApproved', true] }, 1, 0],
@@ -193,12 +199,13 @@ router.post('/users/find', async (req, res, next) => {
         users: {
           $push: {
             _id: '$_id',
-            name: isAdmin ? equalToCondition(...approvalCheck('name')) : '$name',
-            gender: isAdmin ? equalToCondition(...approvalCheck('gender')) : '$gender',
-            occupation: isAdmin ? equalToCondition(...approvalCheck('occupation')) : '$occupation',
-            contactNumber: isAdmin ? equalToCondition(...approvalCheck('contactNumber')) : '$contactNumber',
-            dateOfBirth: { $dateToString: { format: '%d-%m-%Y', date: isAdmin ? equalToCondition(...approvalCheck('dateOfBirth')) : '$dateOfBirth' } },
-            dateOfMarriage: { $dateToString: { format: '%d-%m-%Y', date: isAdmin ? equalToCondition(...approvalCheck('dateOfMarriage')) : '$dateOfMarriage' } },
+            name: '$name',
+            gender: '$gender',
+            occupation: '$occupation',
+            contactNumber: '$contactNumber',
+            dateOfBirth: { $dateToString: { format: '%d-%m-%Y', date: '$dateOfBirth' } },
+            dateOfMarriage: { $dateToString: { format: '%d-%m-%Y', date: '$dateOfMarriage' } },
+            previousData: '$previousData',
             isApproved: '$isApproved',
           },
         },
@@ -272,14 +279,20 @@ router.post('/users/find', async (req, res, next) => {
             toISODateString = convertToISODateString(toDate);
           }
 	      if (new Date(isoDateString || fromISODateString || toISODateString).getTime()) {
-            const startDate = new Date(isoDateString || fromISODateString || toISODateString);
+            const startDate = new Date(isoDateString || fromISODateString);
             startDate.setUTCHours(0, 0, 0, 0);
-            const endDate = new Date(isoDateString || toISODateString || fromISODateString);
+            const endDate = new Date(isoDateString || toISODateString);
             endDate.setUTCHours(23, 59, 59, 999);
-	        obj.$and = [
-              { [field]: { $gte: startDate } },
-              { [field]: { $lte: endDate } },
-	  	    ];
+	        if (startDate.getTime() && endDate.getTime()) {
+			  obj.$and = [
+			    { [field]: { $gte: startDate } },
+			    { [field]: { $lte: endDate } },
+			  ];
+			} else {
+			  obj[field] = startDate.getTime()
+			    ? { $gte: startDate }
+				: { $lte: endDate };
+			}
             search_query.$or.push(obj);
 	      }
 	    } else {
@@ -297,6 +310,197 @@ router.post('/users/find', async (req, res, next) => {
 	  userAggregatePipeline.push(match, group);
 	//   isAdmin && !contactNumber ? userAggregatePipeline.push(match, group)
 	//     : userAggregatePipeline.push(match);
+	}
+
+	const recordsFiltered = (await userAggregate(userAggregatePipeline.concat(count)))[0];
+
+	!(search_value || fromDate || toDate) ? userAggregatePipeline.push(...lookupAndUnwind, project)
+      : userAggregatePipeline.push(project);
+
+	const data = await userAggregate(userAggregatePipeline)
+	  .sort(sort)
+	  .skip(parseInt(start))
+	  .limit(limit || recordsFiltered && recordsFiltered.count || 1);
+	res.json({
+	  recordsFiltered: recordsFiltered && recordsFiltered.count,
+	  recordsTotal: data.length,
+	  data,
+	});
+  }
+  catch(err) {
+	next(err);
+  }
+});
+
+router.post('/users/find/individual/:contactNumber?', async (req, res, next) => {
+  try {
+	const { contactNumber = '' } = req.params || {};
+    const { length = 0, start = 0, fromDate, toDate } = req.body;
+	const searchFields = req.body.searchFields ? req.body.searchFields.split(',') : [];
+    const sort = {};
+    const search_query = {};
+    const search_arr = searchFields.length
+	? searchFields
+	: [
+	  'name',
+      'gender',
+      'occupation',
+      'dateOfBirth',
+      'dateOfMarriage',
+      'contactNumber',
+      'address',
+	  'nativeAddress',
+	  'email',
+	  'gotra',
+      'head.name',
+      'head.contactNumber',
+	  'head.occupation',
+      'primaryContact.name',
+      'primaryContact.contactNumber',
+	  'primaryContact.occupation',
+    ];
+    const sort_arr = [
+  	  '_id',
+  	  'name',
+  	  'gender',
+  	  'occupation',
+  	  'dateOfBirth',
+	  'dateOfBirth',
+	  'dateOfMarriage',
+	  'contactNumber',
+	  'address',
+	  'nativeAddress',
+	  'email',
+	  'gotra',
+      'head.name',
+      'primaryContact.name',
+      'primaryContact.contactNumber',
+    ];
+    const query = { isArchive: false, isAdmin: false };
+	let search_value = req.body['search[value]'];
+    const sort_key = sort_arr[parseInt(req.body['order[0][column]'])];
+    const sort_val = req.body['order[0][dir]'] === 'asc' ? 1: -1;
+    const limit = parseInt(length) > 0 ? parseInt(length): '';
+    sort[sort_key] = sort_val;
+
+	const userAggregate = userAggregatePipeline => User.aggregate(userAggregatePipeline);
+	const lookupAndUnwind = [
+	  {
+		$lookup: {
+		  from: 'users',
+		  localField: 'primaryContact',
+		  foreignField: '_id',
+		  as: 'primaryContact',
+		},
+	  },
+	  { $unwind: '$primaryContact' },
+	  {
+		$lookup: {
+		  from: 'users',
+		  localField: 'head',
+		  foreignField: '_id',
+		  as: 'head',
+		},
+	  },
+	  { $unwind: '$head' },
+	];
+	const project = {
+	  $project:  {
+	    _id: 1,
+	    address: 1,
+	    'head._id': 1,
+	    'head.name': 1,
+	    'head.gender': 1,
+	    'primaryContact._id': 1,
+	    'primaryContact.name': 1,
+	    'primaryContact.contactNumber': 1,
+	    'primaryContact.gender': 1,
+        gotra: 1,
+        nativeAddress: 1,
+        email: 1,
+		isCommonDetailsApproved: 1,
+		picture: 1,
+		name: 1,
+		gender: 1,
+		occupation: 1,
+		dateOfBirth: { $dateToString: { format: '%d-%m-%Y', date: '$dateOfBirth' } },
+		dateOfMarriage: { $dateToString: { format: '%d-%m-%Y', date: '$dateOfMarriage' } },
+		contactNumber: 1,
+		isApproved: 1,
+	  },
+	};
+	const count = {
+	  $group: {
+	    _id: null,
+	    count: { $sum: 1 },
+	  },
+	};
+	if (contactNumber) {
+	  const user = (await userAggregate([
+		{ $match: query },
+		...lookupAndUnwind,
+		{ $match: { 'primaryContact.contactNumber': contactNumber } },
+		{
+		  $group: {
+		    _id: null,
+	        primaryContact: { $first: '$primaryContact._id' },
+		  },
+		},
+	  ]))[0];
+	  query.primaryContact = user?.primaryContact;
+	}
+	const match = { $match: query };
+	const userAggregatePipeline = [];
+
+	if (search_value || fromDate || toDate) {
+  	  search_query.$or = [];
+  	  search_arr.forEach(field => {
+        const obj = {};
+	    if (['dateOfBirth', 'dateOfMarriage'].includes(field) && (search_value || fromDate || toDate)) {
+          const convertToISODateString = date => {
+            const [day, month, year] = date.split(/[\/\-]/);
+            return [year, month, day].join('-');
+          };
+          let isoDateString, fromISODateString, toISODateString;
+          if (search_value) {
+            isoDateString = convertToISODateString(search_value);
+          }
+          if (fromDate) {
+            fromISODateString = convertToISODateString(fromDate);
+          }
+          if (toDate) {
+            toISODateString = convertToISODateString(toDate);
+          }
+	      if (new Date(isoDateString || fromISODateString || toISODateString).getTime()) {
+            const startDate = new Date(isoDateString || fromISODateString);
+            startDate.setUTCHours(0, 0, 0, 0);
+            const endDate = new Date(isoDateString || toISODateString);
+            endDate.setUTCHours(23, 59, 59, 999);
+	        if (startDate.getTime() && endDate.getTime()) {
+			  obj.$and = [
+			    { [field]: { $gte: startDate } },
+			    { [field]: { $lte: endDate } },
+			  ];
+			} else {
+			  obj[field] = startDate.getTime()
+			    ? { $gte: startDate }
+				: { $lte: endDate };
+			}
+            search_query.$or.push(obj);
+	      }
+	    } else {
+	      obj[field] = {
+           '$regex': field === 'gender' ? `^${(search_value || fromDate || toDate)}` : (search_value || fromDate || toDate),
+	       '$options': 'i',
+	      };
+  	      search_query.$or.push(obj);
+	    }
+  	  });
+	  userAggregatePipeline.push(match, ...lookupAndUnwind, { $match: search_query });
+    }
+
+	if (!(search_value || fromDate || toDate)) {
+	  userAggregatePipeline.push(match);
 	}
 
 	const recordsFiltered = (await userAggregate(userAggregatePipeline.concat(count)))[0];
@@ -467,43 +671,46 @@ router.post('/users/find/gotra/:gotra?', async (req, res, next) => {
   	  search_arr.forEach(field => {
         const obj = {};
 	    if (['dateOfBirth', 'dateOfMarriage'].includes(field) && (search_value || fromDate || toDate)) {
-		  const convertToISODateString = date => {
+          const convertToISODateString = date => {
             const [day, month, year] = date.split(/[\/\-]/);
             return [year, month, day].join('-');
-		  };
-		  let isoDateString, fromISODateString, toISODateString;
+          };
+          let isoDateString, fromISODateString, toISODateString;
           if (search_value) {
             isoDateString = convertToISODateString(search_value);
-		  }
-		  if (fromDate) {
+          }
+          if (fromDate) {
             fromISODateString = convertToISODateString(fromDate);
-		  }
-		  if (toDate) {
+          }
+          if (toDate) {
             toISODateString = convertToISODateString(toDate);
-		  }
+          }
 	      if (new Date(isoDateString || fromISODateString || toISODateString).getTime()) {
-            const startDate = new Date(isoDateString || fromISODateString || toISODateString);
+            const startDate = new Date(isoDateString || fromISODateString);
             startDate.setUTCHours(0, 0, 0, 0);
-            const endDate = new Date(isoDateString || toISODateString || fromISODateString);
+            const endDate = new Date(isoDateString || toISODateString);
             endDate.setUTCHours(23, 59, 59, 999);
-	        obj.$and = [
-              { [field]: { $gte: startDate } },
-              { [field]: { $lte: endDate } },
-	  	    ];
+	        if (startDate.getTime() && endDate.getTime()) {
+			  obj.$and = [
+			    { [field]: { $gte: startDate } },
+			    { [field]: { $lte: endDate } },
+			  ];
+			} else {
+			  obj[field] = startDate.getTime()
+			    ? { $gte: startDate }
+				: { $lte: endDate };
+			}
             search_query.$or.push(obj);
 	      }
 	    } else {
 	      obj[field] = {
-            '$regex': field === 'gender' ? `^${(search_value || fromDate || toDate)}` : (search_value || fromDate || toDate),
+           '$regex': field === 'gender' ? `^${(search_value || fromDate || toDate)}` : (search_value || fromDate || toDate),
 	       '$options': 'i',
 	      };
   	      search_query.$or.push(obj);
 	    }
   	  });
-	  userAggregatePipeline.push(match, ...lookupAndUnwind, { $match: search_query });
-	  if (!gotra) {
-		userAggregatePipeline.push(group);
-	  }
+	  userAggregatePipeline.push(match, ...lookupAndUnwind, { $match: search_query }, group);
     }
 
 	if (!(search_value || fromDate || toDate)) {
@@ -582,7 +789,7 @@ router.post('/users/add', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'
       const random = FX.randomNumber(6, '');
       const fileName = random + '-' + picture.name;
       req.body.picture = fileName;
-      await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
+      await picture.mv(path.join(uploadPath, fileName));
     }
     const { _id, email, dateOfBirth } = await User.create(req.body);
     if (isAdmin) {
@@ -600,7 +807,7 @@ router.post('/users/add', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'
         },
       );
     }
-    res.redirect('/admin/users');
+    res.redirect('/admin/users/family');
   } catch(err) {
     next(err);
   }
@@ -624,6 +831,7 @@ router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, re
 	  password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)),
 	  isApproved: false,
 	  isCommonDetailApproved: false,
+	  picture: user.picture,
 	  previousData: {
 		isApprovedAfterRegistration: false,
 		primaryContact,
@@ -632,6 +840,7 @@ router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, re
 		nativeAddress: user.nativeAddress,
 		email: user.email,
 		gotra: user.gotra,
+		picture: user.picture,
 	  },
 	});
     res.json({ message: 'User added successfully' });
@@ -640,7 +849,7 @@ router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, re
   }
 });
 
-router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers), async (req, res, next) => {
+router.post('/users/register', upload.single('picture'), FX.validate(vrules.registerPrimaryContactAndUsers), async (req, res, next) => {
   if (!req.body.users.find(user => user.isPrimary && user.contactNumber)) {
 	return res.json({ message: 'contactNumber field is required for primary contact user' });
   }
@@ -675,12 +884,9 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 		nativeAddress,
 		email,
       };
-	  if ((req.files && Object.keys(req.files).length === 1) && isPrimary) {
-	    const { picture } = req.files;
-	    const random = FX.randomNumber(6, '');
-	    const fileName = random + '-' + picture.name;
-	    user.picture = fileName;
-	    await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
+	  if (((req.files || req.file) && Object.keys((req.files || req.file)).length) && isPrimary) {
+		const fileName = await FX.uploadFile(req.file);
+		user.picture = fileName;
 	  }
 	  if (isPrimary) {
 		const [, month, day] = new Date(user.dateOfBirth).toISOString().slice(0, 10).split('-');
@@ -713,6 +919,7 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
 			gotra: gotraToUpdate,
 			previousData: {
               isApprovedAfterRegistration: false,
+              isCommonDetailsApprovedAfterRegistration: false,
 			  primaryContact: primaryContactId,
 	          head: headId || primaryContactId,
 			  address: addressToUpdate,
@@ -740,19 +947,41 @@ router.post('/users/register', FX.validate(vrules.registerPrimaryContactAndUsers
   }
 });
 
-router.post('/users/edit', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'), async (req, res, next) => {
+router.post('/users/edit', upload.single('picture'), FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'), async (req, res, next) => {
   try {
-	const { id, head, address } = req.body;
-    req.body.isApproved = false;
-    if (req.files && Object.keys(req.files).length === 1) {
-      const { picture } = req.files;
-      const random = FX.randomNumber(6, '');
-      const fileName = random + '-' + picture.name;
-      req.body.picture = fileName;
-      await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
-    }
-    const { primaryContact } = await User.findByIdAndUpdate(id, req.body);
-	await User.updateMany({ primaryContact }, { $set: { head, address } });
+	const {
+	  id,
+	  name,
+	  gender,
+	  occupation,
+	  dateOfBirth,
+	  dateOfMarriage,
+	  contactNumber,
+	} = req.body;
+	const user = await User.findById(id);
+	await User.updateOne(
+	  { _id: new ObjectId(id) },
+	  {
+        $set: {
+		  id,
+		  name,
+		  gender,
+		  occupation,
+		  dateOfBirth,
+		  dateOfMarriage,
+		  contactNumber,
+		  previousData: {
+		    ...user.previousData,
+		    name: user.name,
+		    gender: user.gender,
+		    occupation: user.occupation,
+		    dateOfBirth: user.dateOfBirth,
+		    dateOfMarriage: user.dateOfMarriage,
+		    contactNumber: user.contactNumber,
+		  },
+		},
+	  },
+	);
     res.redirect('/admin/users');
   } catch(err) {
     next(err);
@@ -772,24 +1001,26 @@ router.post('/users/edit/data', FX.validate(vrules.addOrEditUser), async (req, r
 	} = req.body;
 	const user = await User.findById(id);
     await User.updateOne(
-	  { _id: ObjectId(id) },
+	  { _id: new ObjectId(id) },
 	  {
-	    id,
-	    name,
-	    gender,
-	    occupation,
-	    dateOfBirth,
-	    dateOfMarriage,
-	    contactNumber,
-		isApproved: false,
-		previousData: {
-		  ...user.previousData,
-		  name: user.name,
-          gender: user.gender,
-          occupation: user.occupation,
-          dateOfBirth: user.dateOfBirth,
-          dateOfMarriage: user.dateOfMarriage,
-          contactNumber: user.contactNumber,
+        $set: {
+		  id,
+		  name,
+		  gender,
+		  occupation,
+		  dateOfBirth,
+		  dateOfMarriage,
+		  contactNumber,
+		  isApproved: false,
+		  previousData: {
+		    ...user.previousData,
+		    name: user.name,
+		    gender: user.gender,
+		    occupation: user.occupation,
+		    dateOfBirth: user.dateOfBirth,
+		    dateOfMarriage: user.dateOfMarriage,
+		    contactNumber: user.contactNumber,
+		  },
 		},
 	  },
 	);
@@ -799,7 +1030,7 @@ router.post('/users/edit/data', FX.validate(vrules.addOrEditUser), async (req, r
   }
 });
 
-router.post('/users/edit/commonDetail', FX.validate(vrules.editCommonDetails), async (req, res, next) => {
+router.post('/users/edit/commonDetail', upload.single('picture'), FX.validate(vrules.editCommonDetails), async (req, res, next) => {
   try {
 	const { head, primaryContact, address, nativeAddress, email, gotra } = req.body;
 	const $set = {
@@ -811,14 +1042,14 @@ router.post('/users/edit/commonDetail', FX.validate(vrules.editCommonDetails), a
 	  gotra: gotra.toUpperCase(),
 	  isCommonDetailApproved: false,
 	};
-    if (req.files && Object.keys(req.files).length === 1) {
-      const { picture } = req.files;
-      const random = FX.randomNumber(6, '');
-      const fileName = random + '-' + picture.name;
+    if ((req.files || req.file) && Object.keys((req.files || req.file)).length) {
+	  const fileName = await FX.uploadFile(req.file);
       $set.picture = fileName;
-      await picture.mv(path.join(__dirname, '../../public', uploadPath, fileName));
     }
 	const user = await User.findById(primaryContact);
+	if ($set.picture) {
+      await FX.deleteFile(user.previousData.picture);
+	}
 	await User.updateMany(
       { primaryContact },
       {
@@ -846,9 +1077,12 @@ router.post('/users/edit/commonDetail', FX.validate(vrules.editCommonDetails), a
 router.get('/users/delete/:id', async (req, res, next) => {
   try {
 	const { isAdmin } = req.session.user;
-    await User.updateOne(
-	  { _id: new ObjectId(req.params.id) },
-      { $set:{ [isAdmin ? 'isArchive' : 'isApproved']: true } },
+	const deleteAllFamilyMembers = req.query.deleteAllFamilyMembers === 'true';
+	const deleteCondition = { [deleteAllFamilyMembers ? 'primaryContact' : '_id']: new ObjectId(req.params.id) };
+    const set = { $set:{ [isAdmin ? 'isArchive' : 'isApproved']: isAdmin } };
+    await (deleteAllFamilyMembers
+	  ? User.updateMany(deleteCondition, set)
+	  : User.updateOne(deleteCondition, set)
 	);
 	res.status(200).json({ message:`user deleted` });
   } catch(err) {
@@ -861,19 +1095,69 @@ router.get('/users/view/:id', async (req, res, next) => {
 	let userData = await User.findById(req.params.id);
 	if (req.query.includeFamilyMembers === 'true') {
 	  userData = {
-	    users: (await User.find({
-		  primaryContact: userData.primaryContact,
-		  isArchive: false,
-		  isAdmin: false,
-		}).lean()).map(user => {
-            const userId = `${user._id}`;
-            if (userId === `${(user.isApproved || user.isCommonDetailApproved) ? user.primaryContact : user.previousData.primaryContact}`) {
-              user.isPrimary = true;
-            }
-            if (userId === `${(user.isApproved || user.isCommonDetailApproved) ? user.head: user.previousData.head}`) {
-              user.isHead = true;
-            }
-            return { ...user, ...user.previousData };
+	    users: (await User.aggregate([
+		  {
+			$match: {
+			  primaryContact: userData.primaryContact,
+			  isArchive: false,
+			  isAdmin: false,
+			},
+		  },
+		  {
+			$lookup: {
+			  from: 'users',
+			  localField: 'primaryContact',
+			  foreignField: '_id',
+			  as: 'primaryContact',
+			},
+		  },
+		  { $unwind: '$primaryContact' },
+		  {
+			$lookup: {
+			  from: 'users',
+			  localField: 'head',
+			  foreignField: '_id',
+			  as: 'head',
+			},
+		  },
+		  { $unwind: '$head' },
+		  {
+	        $project: {
+              _id: 1,
+			  name: 1,
+			  gender: 1,
+			  occupation: 1,
+			  contactNumber: 1,
+			  dateOfBirth: 1,
+			  dateOfMarriage: 1,
+              'head._id': 1,
+			  'head.name': 1,
+			  'head.occupation': 1,
+			  'head.contactNumber': 1,
+			  'primaryContact._id': 1,
+			  'primaryContact.name': 1,
+			  'primaryContact.occupation': 1,
+			  'primaryContact.contactNumber': 1,
+			  address: 1,
+			  nativeAddress: 1,
+			  gotra: 1,
+			  email: 1,
+			  picture: 1,
+			  previousData: 1,
+			  isApproved: 1,
+			  isCommonDetailApproved: 1,
+			},
+		  },
+	    ])).map(user => {
+		  const userId = `${user._id}`;
+		  if (userId === `${(user.isApproved || user.isCommonDetailApproved) ? user.primaryContact._id : user.previousData.primaryContact._id}`) {
+		    user.isPrimary = true;
+		  }
+		  if (userId === `${(user.isApproved || user.isCommonDetailApproved) ? user.head._id: user.previousData.head._id}`) {
+		    user.isHead = true;
+		  }
+		  // return { ...user, ...user.previousData };
+		  return user;
         }),
 	  };
 	}
@@ -895,9 +1179,25 @@ router.post('/users/adminNotify/:id',FX.adminAuth,function(req,res,next){
 
 router.post('/users/approve', FX.Auth, FX.validate(vrules.approveUser, 'user.html'), async (req, res, next) => {
   try {
-    const { id, isApproved } = req.body;
-    await User.updateOne({ _id: new ObjectId(id) }, { $set:{ isApproved, 'previousData.isApprovedAfterRegistration': true } });
-    res.status(200).json({ message: `approved changed ${isApproved}` });
+    const { id, isApproved, isCommonDetailsApproved } = req.body;
+	const isApprovedCondition = (typeof isApproved === 'boolean') || ['true', 'false'].includes(isApproved);
+	const isCommonDetailsApprovedCondition = (typeof isCommonDetailsApproved === 'boolean') || ['true', 'false'].includes(isCommonDetailsApproved);
+	if (isApprovedCondition) {
+	  const approveAllFamilyMembers = req.query.approveAllFamilyMembers === 'true';
+	  const updateCondition = { [approveAllFamilyMembers ? 'primaryContact' : '_id']: new ObjectId(id) };
+	  const set = { $set: { isApproved, 'previousData.isApprovedAfterRegistration': true } };
+	  await (approveAllFamilyMembers
+	    ? User.updateMany(updateCondition, set)
+		: User.updateOne(updateCondition, set)
+	  );
+	}
+	if (isCommonDetailsApprovedCondition) {
+		await User.updateMany(
+		  { primaryContact: new ObjectId(id) },
+		  { $set: { isCommonDetailsApproved, 'previousData.isCommonDetailsApprovedAfterRegistration': true } },
+		);
+	}
+    res.status(200).json({ message: `status changed ${isApprovedCondition ? isApproved : isCommonDetailsApproved}` });
   } catch(err) {
 	next(err);
   }

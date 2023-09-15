@@ -46,5 +46,6 @@ module.exports = {
   approveUser: {
     id: 'alpha_num',
     isApproved: 'boolean',
+    isCommonDetailsApproved: 'boolean',
   },
 };

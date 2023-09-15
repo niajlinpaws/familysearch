@@ -33,7 +33,6 @@ router.all('/', FX.Auth, (req, res, next) => {
   .catch(err => next(err));
 });
 
-
 router.all('/logout', (req, res) => {
 	req.session.destroy;
 	// Deletes the cookie.
@@ -63,7 +62,7 @@ router.post('/changePassword', FX.Auth, FX.validate(vrules.changePassword, 'chan
 	  },
 	  { new: true },
 	)
-	  .then(() => res.redirect('/admin/users'))
+	  .then(() => res.redirect('/admin/users/family'))
 	  .catch(err => next(err));
   });
 });
