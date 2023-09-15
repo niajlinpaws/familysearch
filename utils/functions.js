@@ -4,6 +4,8 @@ const _ = require('lodash');
 const path = require('path');
 const Validator = require('validatorjs');
 const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
+const { Readable } =  require('stream');
 
 const {
   adminUrl,
@@ -13,7 +15,10 @@ const {
   smtpAuthUser,
   smtpAuthPass,
   fromMail,
+  scopes,
+  driveUploadFolderId,
 } = require('../config/constants');
+const pkey = require('../config/prime-chess-397807-d45e7fde6c1f.json');
 
 const transport = nodemailer.createTransport({
   from: smtpFrom,
@@ -132,5 +137,46 @@ module.exports = {
         }
       } else return next();
     };
+  },
+  gcloudAuthorize: async function () {
+    const jwtClient = new google.auth.JWT(
+      pkey.client_email,
+      null,
+      pkey.private_key,
+      scopes,
+    )
+    await jwtClient.authorize();
+    return jwtClient;
+  },
+  uploadFile: async function (file) {
+    const authClient = await this.gcloudAuthorize();
+    const drive = google.drive({ version: 'v3', auth: authClient });
+    const random = this.randomNumber(6, '');
+    const fileName = random + '-' + file.originalname;
+    const { data: { id } } = await drive.files.create({
+      media: {
+        body: Readable.from(file.buffer),
+      },
+      fields: 'id',
+      resource: {
+        name: fileName,
+        parents: [driveUploadFolderId],
+      },
+    });
+    // await drive.permissions.create({
+    //   fileId: id,
+    //   requestBody: {
+    //     role: 'reader',
+    //     type: 'anyone',
+    //   }
+    // });
+    return `https://drive.google.com/uc?id=${id}`;
+  },
+  deleteFile: async function (file) {
+    const authClient = await this.gcloudAuthorize();
+    const drive = google.drive({ version: 'v3', auth: authClient });
+    const fileId = file.split('=')[1];
+    await drive.files.delete({ fileId });
+    return true;
   },
 };

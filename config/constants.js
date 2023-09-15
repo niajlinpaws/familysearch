@@ -20,4 +20,6 @@ module.exports = {
   smtpAuthUser: process.env.SMTP_AUTH_USER,
   smtpAuthPass: process.env.SMTP_AUTH_PASS,
   fromMail: process.env.FROM_MAIL,
+  scopes: process.env.GCLOUD_SCOPES,
+  driveUploadFolderId: process.env.GDRIVE_UPLOAD_FOLDER_ID,
 };
