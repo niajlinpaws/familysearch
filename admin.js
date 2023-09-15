@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override')
 const session = require('express-session');
-const fileUpload = require('express-fileupload');
+// const fileUpload = require('express-fileupload');
 const MongoStore = require('connect-mongo');
 const nunjucks = require('nunjucks');
 const flash = require('connect-flash');
@@ -64,17 +64,17 @@ app.use(session({
 }));
 
 app.use(flash());
-app.use(fileUpload({
-  limits: { fileSize: 1 * 1024 * 1024 },
-  createParentPath: true,
-  useTempFiles : true,
-  tempFileDir : tempUploadPath,
-  safeFileNames: true,
-  preserveExtension: true,
-  abortOnLimit: true,
-  parseNested: true,
-  uploadTimeout: 2000,
-}));
+// app.use(fileUpload({
+//   limits: { fileSize: 1 * 1024 * 1024 },
+//   createParentPath: true,
+//   useTempFiles : true,
+//   tempFileDir : tempUploadPath,
+//   safeFileNames: true,
+//   preserveExtension: true,
+//   abortOnLimit: true,
+//   parseNested: true,
+//   uploadTimeout: 2000,
+// }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods','GET,POST,PUT,DELETE,OPTIONS');	
   res.header('Access-Control-Allow-Origin', '*');
