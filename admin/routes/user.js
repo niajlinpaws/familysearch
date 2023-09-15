@@ -854,7 +854,7 @@ router.post('/users/register', upload.single('picture'), FX.validate(vrules.regi
 	return res.json({ message: 'contactNumber field is required for primary contact user' });
   }
   try {
-	let primaryContactId, headId, addressToUpdate, nativeAddressToUpdate, emailToUpdate, gotraToUpdate;
+	let primaryContactId, headId, addressToUpdate, nativeAddressToUpdate, emailToUpdate, gotraToUpdate, pictureToUpdate;
 	const idsToUpdate = [];
 	await Promise.all(req.body.users.map(async ({
 	  isPrimary,
@@ -876,7 +876,7 @@ router.post('/users/register', upload.single('picture'), FX.validate(vrules.regi
         name,
         gender,
         occupation,
-        gotra: gotra.toUpperCase(),
+        gotra: gotra?.toUpperCase(),
         dateOfBirth,
         dateOfMarriage,
         contactNumber,
@@ -887,6 +887,7 @@ router.post('/users/register', upload.single('picture'), FX.validate(vrules.regi
 	  if (((req.files || req.file) && Object.keys((req.files || req.file)).length) && isPrimary) {
 		const fileName = await FX.uploadFile(req.file);
 		user.picture = fileName;
+		pictureToUpdate = user.picture;
 	  }
 	  if (isPrimary) {
 		const [, month, day] = new Date(user.dateOfBirth).toISOString().slice(0, 10).split('-');
@@ -917,6 +918,7 @@ router.post('/users/register', upload.single('picture'), FX.validate(vrules.regi
 			nativeAddress: nativeAddressToUpdate,
 			email: emailToUpdate,
 			gotra: gotraToUpdate,
+			picture: pictureToUpdate,
 			previousData: {
               isApprovedAfterRegistration: false,
               isCommonDetailsApprovedAfterRegistration: false,
@@ -926,6 +928,7 @@ router.post('/users/register', upload.single('picture'), FX.validate(vrules.regi
 			  nativeAddress: nativeAddressToUpdate,
 			  email: emailToUpdate,
 			  gotra: gotraToUpdate,
+			  picture: pictureToUpdate,
 			},
           },
         },
