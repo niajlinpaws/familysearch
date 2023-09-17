@@ -10,7 +10,7 @@ $().ready(function() {
 
     // Init Datetimepicker
 
-    if ($(".datetimepicker").length != 0) {
+    if (($(".datetimepicker").length || $(".datepicker").length || $(".timepicker").length) != 0) {
         $('.datetimepicker').datetimepicker({
             icons: {
                 time: "fa fa-clock-o",
@@ -1457,6 +1457,29 @@ demo = {
                             '</strong>'
                     });
                 })
+        } else if (type == 'custom-warning-message-and-confirmation') {
+            return new Promise(resolve => {
+                swal({
+                    title: "Are you sure?",
+                    text: message,
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonClass: "btn btn-info btn-fill",
+                    confirmButtonText: "Yes, proceed!",
+                    cancelButtonClass: "btn btn-danger btn-fill",
+                    closeOnConfirm: false,
+                    //allowOutsideClick: false
+                }, function (isConfirm) {
+                    if (isConfirm) {
+                        swal({ title:"Done!", text:"Your changes has been applied.", type:"success", closeOnConfirm: true, confirmButtonText:'OK' }, function (value) {
+                            if (reload) {
+                                location.href = reload;
+                            }
+                            resolve(true);
+                        });
+                    } else resolve(false);
+                });
+            });
         }
     }
 
