@@ -120,7 +120,7 @@ router.post('/users/find', async (req, res, next) => {
   	  'totalMembers',
     ]
     : [
-      'primaryContact.contactNumber',
+      'primaryContact.name',
 	  'picture',
       'name',
       'gender',
@@ -143,7 +143,7 @@ router.post('/users/find', async (req, res, next) => {
 	if (!search_value && (!isAdmin || contactNumber)) {
 	  search_value = contactNumber;
 	}
-    const sort_key = sort_arr[parseInt(req.body['order[0][column]'])];
+    const sort_key = sort_arr[parseInt(req.body['order[0][column]'] || 0)];
     const sort_val = req.body['order[0][dir]'] === 'asc' ? 1: -1;
     const limit = parseInt(length) > 0 ? parseInt(length): '';
     sort[sort_key] = sort_val;
@@ -781,6 +781,7 @@ router.post('/users/check', async (req, res, next) => {
 router.post('/users/add', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'), async (req, res, next) => {
   try {
     const { isAdmin, primaryContact } = req.session.user;
+    const { name, gender, occupation } = req.body;
     if (!isAdmin) {
       req.body.primaryContact = primaryContact;
     }
@@ -791,6 +792,7 @@ router.post('/users/add', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'
       req.body.picture = fileName;
       await picture.mv(path.join(uploadPath, fileName));
     }
+	req.body = { ...req.body, ...(FX.capitalize({ name, gender, occupation })) };
     const { _id, email, dateOfBirth } = await User.create(req.body);
     if (isAdmin) {
 	  const [, month, day] = new Date(dateOfBirth).toISOString().slice(0, 10).split('-');
@@ -815,11 +817,19 @@ router.post('/users/add', FX.Auth, FX.validate(vrules.addOrEditUser, 'user.html'
 
 router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, res, next) => {
   try {
-    const { primaryContact, dateOfBirth } = req.body;
+    const { primaryContact, dateOfBirth, name, gender, occupation } = req.body;
     const user = await User.findById(primaryContact);
 	if (!user) return res.json({ message: 'Primary contact not found' });
 	const [, month, day] = new Date(dateOfBirth).toISOString().slice(0, 10).split('-');
 	const password = user.email.slice(0, 1).toUpperCase() + user.email.slice(1, 4) + day + month + '#';
+	req.body = {
+	  ...req.body,
+	  ...(FX.capitalize({
+	    name,
+	    gender,
+	    occupation,
+	  })),
+	};
     await User.create({
 	  ...req.body,
 	  primaryContact,
@@ -830,18 +840,18 @@ router.post('/users/add/data', FX.validate(vrules.addOrEditUser), async (req, re
       email: user.email,
 	  password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)),
 	  isApproved: false,
-	  isCommonDetailsApproved: true,
+	  isCommonDetailsApproved: user.isCommonDetailsApproved,
 	  picture: user.picture,
 	  previousData: {
 		isApprovedAfterRegistration: false,
-		isCommonDetailsApprovedAfterRegistration: true,
+		isCommonDetailsApprovedAfterRegistration: user.previousData.isCommonDetailsApprovedAfterRegistration,
 		primaryContact,
-		head: user.head,
-		address: user.address,
-		nativeAddress: user.nativeAddress,
-		email: user.email,
-		gotra: user.gotra,
-		picture: user.picture,
+		head: user.previousData.head,
+		address: user.previousData.address,
+		nativeAddress: user.previousData.nativeAddress,
+		email: user.previousData.email,
+		gotra: user.previousData.gotra,
+		picture: user.previousData.picture,
 	  },
 	});
     res.json({ message: 'User added successfully' });
@@ -874,15 +884,17 @@ router.post('/users/register', upload.single('picture'), FX.validate(vrules.regi
 	  const user = {
         isPrimary,
         isHead,
-        name,
-        gender,
-        occupation,
-        gotra: gotra?.toUpperCase(),
+        ...(FX.capitalize({
+		  ...(name && { name }),
+          ...(gender && { gender }),
+          ...(occupation && { occupation }),
+          ...(gotra && { gotra }),
+		  ...(address && { address }),
+		  ...(nativeAddress && { nativeAddress }),
+		})),
         dateOfBirth,
         dateOfMarriage,
         contactNumber,
-		address,
-		nativeAddress,
 		email,
       };
 	  if (((req.files || req.file) && Object.keys((req.files || req.file)).length) && isPrimary) {
@@ -929,7 +941,6 @@ router.post('/users/register', upload.single('picture'), FX.validate(vrules.regi
 			  nativeAddress: nativeAddressToUpdate,
 			  email: emailToUpdate,
 			  gotra: gotraToUpdate,
-			  picture: pictureToUpdate,
 			},
           },
         },
@@ -968,9 +979,11 @@ router.post('/users/edit', upload.single('picture'), FX.Auth, FX.validate(vrules
 	  {
         $set: {
 		  id,
-		  name,
-		  gender,
-		  occupation,
+		  ...(FX.capitalize({
+		    name,
+            gender,
+            occupation,
+          })),
 		  dateOfBirth,
 		  dateOfMarriage,
 		  contactNumber,
@@ -1009,22 +1022,26 @@ router.post('/users/edit/data', FX.validate(vrules.addOrEditUser), async (req, r
 	  {
         $set: {
 		  id,
-		  name,
-		  gender,
-		  occupation,
+		  ...(FX.capitalize({
+            ...(name && { name }),
+            ...(gender && { gender }),
+            ...(occupation && { occupation }),
+          })),
 		  dateOfBirth,
 		  dateOfMarriage,
 		  contactNumber,
 		  isApproved: false,
-		  previousData: {
-		    ...user.previousData,
-		    name: user.name,
-		    gender: user.gender,
-		    occupation: user.occupation,
-		    dateOfBirth: user.dateOfBirth,
-		    dateOfMarriage: user.dateOfMarriage,
-		    contactNumber: user.contactNumber,
-		  },
+		  ...(user.isApproved && {
+			previousData: {
+		      ...user.previousData,
+		      name: user.name,
+		      gender: user.gender,
+		      occupation: user.occupation,
+		      dateOfBirth: user.dateOfBirth,
+		      dateOfMarriage: user.dateOfMarriage,
+		      contactNumber: user.contactNumber,
+		    },
+		  }),
 		},
 	  },
 	);
@@ -1037,21 +1054,24 @@ router.post('/users/edit/data', FX.validate(vrules.addOrEditUser), async (req, r
 router.post('/users/edit/commonDetail', upload.single('picture'), FX.validate(vrules.editCommonDetails), async (req, res, next) => {
   try {
 	const { head, primaryContact, address, nativeAddress, email, gotra } = req.body;
+	const isAdmin = req.query.isAdmin === 'true';
 	const $set = {
 	  head,
 	  primaryContact,
-	  address,
-	  nativeAddress,
 	  email,
-	  gotra: gotra?.toUpperCase(),
-	  isCommonDetailsApproved: false,
+	  ...(FX.capitalize({
+        ...(gotra && { gotra }),
+        ...(address && { address }),
+        ...(nativeAddress && { nativeAddress }),
+      })),
+	  isCommonDetailsApproved: isAdmin,
 	};
     if ((req.files || req.file) && Object.keys((req.files || req.file)).length) {
 	  const fileName = await FX.uploadFile(req.file);
       $set.picture = fileName;
     }
 	const user = await User.findById(primaryContact);
-	if ($set.picture) {
+	if ($set.picture && user.previousData.picture) {
       await FX.deleteFile(user.previousData.picture);
 	}
 	await User.updateMany(
@@ -1059,20 +1079,24 @@ router.post('/users/edit/commonDetail', upload.single('picture'), FX.validate(vr
       {
         $set: {
           ...$set,
-		  previousData: {
-			...user.previousData,
-            head: user.head,
-	        primaryContact: user.primaryContact,
-	        address: user.address,
-	        nativeAddress: user.nativeAddress,
-	        email: user.email,
-	        gotra: user.gotra,
-			picture: user.picture,
-		  },
+          ...(user.isCommonDetailsApproved && {
+            previousData: {
+			  ...user.previousData,
+              head: user.head,
+	          primaryContact: user.primaryContact,
+	          address: user.address,
+	          nativeAddress: user.nativeAddress,
+	          email: user.email,
+	          gotra: user.gotra,
+			  picture: user.picture,
+		    },
+		  }),
         },
 	  },
 	);
-    res.json({ message: 'Common details updated successfully' });
+    isAdmin
+	  ? res.redirect('/admin/users/family')
+	  : res.json({ message: 'Common details updated successfully' });
   } catch(err) {
     next(err);
   }
@@ -1186,10 +1210,15 @@ router.post('/users/approve', FX.Auth, FX.validate(vrules.approveUser, 'user.htm
     const { id, isApproved, isCommonDetailsApproved } = req.body;
 	const isApprovedCondition = (typeof isApproved === 'boolean') || ['true', 'false'].includes(isApproved);
 	const isCommonDetailsApprovedCondition = (typeof isCommonDetailsApproved === 'boolean') || ['true', 'false'].includes(isCommonDetailsApproved);
+	const approveAllFamilyMembers = req.query.approveAllFamilyMembers === 'true';
 	if (isApprovedCondition) {
-	  const approveAllFamilyMembers = req.query.approveAllFamilyMembers === 'true';
 	  const updateCondition = { [approveAllFamilyMembers ? 'primaryContact' : '_id']: new ObjectId(id) };
-	  const set = { $set: { isApproved, 'previousData.isApprovedAfterRegistration': true } };
+	  const set = {
+        $set: {
+           isApproved,
+          'previousData.isApprovedAfterRegistration': approveAllFamilyMembers ? isApproved === 'true' : true,
+        },
+      };
 	  await (approveAllFamilyMembers
 	    ? User.updateMany(updateCondition, set)
 		: User.updateOne(updateCondition, set)
@@ -1198,7 +1227,12 @@ router.post('/users/approve', FX.Auth, FX.validate(vrules.approveUser, 'user.htm
 	if (isCommonDetailsApprovedCondition) {
 		await User.updateMany(
 		  { primaryContact: new ObjectId(id) },
-		  { $set: { isCommonDetailsApproved, 'previousData.isCommonDetailsApprovedAfterRegistration': true } },
+		  {
+            $set: {
+              isCommonDetailsApproved,
+              'previousData.isCommonDetailsApprovedAfterRegistration': approveAllFamilyMembers ? isCommonDetailsApproved === 'true' : true,
+            },
+          },
 		);
 	}
     res.status(200).json({ message: `status changed ${isApprovedCondition ? isApproved : isCommonDetailsApproved}` });

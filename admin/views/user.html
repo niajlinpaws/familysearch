@@ -19,10 +19,10 @@
                     &nbsp;&nbsp;&nbsp;
                     <div class="row">
                       <div class="col-12 col-sm-4">
-                        {{form.form_group_picker('From', 'datetimepicker', 'fromDate', body.fromDate, '')}}
+                        {{form.form_group_picker('From', 'datepicker', 'fromDate', body.fromDate, '')}}
                        </div>
                       <div class="col-12 col-sm-4">
-                        {{form.form_group_picker('To', 'datetimepicker', 'toDate', body.toDate, '')}}
+                        {{form.form_group_picker('To', 'datepicker', 'toDate', body.toDate, '')}}
                       </div>
                       <div class="col-12 col-sm-4">
                         <div class="form-group has-label">
@@ -143,9 +143,9 @@
 
             {{form.form_group('Occupation', 'text', 'occupation', body.occupation, '')}}
 
-            {{form.form_group_picker('Date of birth', 'datetimepicker', 'dateOfBirth', body.dateOfBirth, '')}}
+            {{form.form_group_picker('Date of birth', 'datepicker', 'dateOfBirth', body.dateOfBirth, '')}}
 
-            {{form.form_group_picker('Date of Marriage', 'datetimepicker', 'dateOfMarriage', body.dateOfMarriage, '')}}
+            {{form.form_group_picker('Date of Marriage', 'datepicker', 'dateOfMarriage', body.dateOfMarriage, '')}}
 
             {{form.form_group('Contact number', 'text', 'contactNumber', body.contactNumber, '', 'number=true', 'maxLength=10', 'minLength=10', 'required=true')}}
 
@@ -287,21 +287,21 @@
             status = isApproved ? 'checked' : '';
             const jsonData = {
               s_no: `<span style="display:none">${_id}</span>`,
-              name,
-              gender,
-              occupation,
-              dateOfBirth,
-              dateOfBirth,
-              dateOfMarriage,
-              contactNumber,
-              address,
-              nativeAddress,
-              email,
-              gotra,
+              name: name || '',
+              gender: gender || '',
+              occupation: occupation || '',
+              dateOfBirth: dateOfBirth || '',
+              dateOfBirth: dateOfBirth || '',
+              dateOfMarriage: dateOfMarriage || '',
+              contactNumber: contactNumber || '',
+              address: address || '',
+              nativeAddress: nativeAddress || '',
+              email: email || '',
+              gotra: gotra || '',
               'headName': head.name,
               'primaryContactName': primaryContact.name,
               'primaryContactNumber': primaryContact.contactNumber,
-              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='primary' data-off-color='primary' data-on-text='' data-off-text=''><span style="display:none">${_id}</span>`,
+              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='success' data-off-color='success' data-on-text='' data-off-text=''><span style="display:none">${_id}</span>`,
               actions: `<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editUser" rel="tooltip" title="Edit User"><span style="display:none">${_id}</span><span style="display:none">${primaryContact._id}</span><i class="fa fa-edit"></i></a><br/><a onclick=${_id === primaryContact._id ? 'demo.showSwal("title-and-text","","","")' : `demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/${_id}","user","{{admin_url}}users")`} href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>`,
               noUse: '',
             };
@@ -352,13 +352,13 @@
       $.get(`{{admin_url}}users/view/${id}?includeFamilyMembers=true`, ({ users }) => {
         const user = users.find(({ _id }) => _id === id);
         const { name, gender, occupation, dateOfBirth, dateOfMarriage, contactNumber, address, head, picture } = user;
-        $('#Validation [name="id"]').val(id);
-        $('#Validation [name="name"]').val(name);
-        $('#Validation [name="gender"][value="' + gender + '"]').attr('checked', 'checked');
-        $('#Validation [name="occupation"]').val(occupation);
-        $('#Validation [name="dateOfBirth"]').val(new Date(dateOfBirth).toLocaleString());
-        $('#Validation [name="dateOfMarriage"]').val(dateOfMarriage ? new Date(dateOfMarriage).toLocaleString() : '');
-        $('#Validation [name="contactNumber"]').val(contactNumber);
+        $('#Validation [name="id"]').val(id || '');
+        $('#Validation [name="name"]').val(name || '');
+        $('#Validation [name="gender"][value="' + (gender || '') + '"]').attr('checked', 'checked');
+        $('#Validation [name="occupation"]').val(occupation || '');
+        $('#Validation [name="dateOfBirth"]').val(dateOfBirth ? new Date(dateOfBirth).toISOString().slice(0, 10) : '');
+        $('#Validation [name="dateOfMarriage"]').val(dateOfMarriage ? new Date(dateOfMarriage).toISOString().slice(0, 10) : '');
+        $('#Validation [name="contactNumber"]').val(contactNumber || '');
         // $('#Validation [name="address"]').val(address);
         // $('#Validation [name="head"]').find('option').remove().end().append(users.map(user => `<option value=${user._id}>${user.name}</option>`).join(''));
         // $('#Validation [name="head"]').selectpicker('val', head._id);

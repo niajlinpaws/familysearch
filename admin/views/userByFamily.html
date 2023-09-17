@@ -19,10 +19,10 @@
                     &nbsp;&nbsp;&nbsp;
                     <div class="row">
                       <div class="col-12 col-sm-4">
-                        {{form.form_group_picker('From', 'datetimepicker', 'fromDate', body.fromDate, '')}}
+                        {{form.form_group_picker('From', 'datepicker', 'fromDate', body.fromDate, '')}}
                        </div>
                       <div class="col-12 col-sm-4">
-                        {{form.form_group_picker('To', 'datetimepicker', 'toDate', body.toDate, '')}}
+                        {{form.form_group_picker('To', 'datepicker', 'toDate', body.toDate, '')}}
                       </div>
                       <div class="col-12 col-sm-4">
                         <div class="form-group has-label">
@@ -78,11 +78,15 @@
                         {% endif %}
                         {% if user.isAdmin %}
                         <th class="all" data-sortable="false">Common Detail Status</th>
-                        <th class="all" data-sortable="false">Picture</th>
+                        <th class="all" data-sortable="false">Actions</th>
+                        <th class="all" data-sortable="false">Family Photo</th>
                         <th class="min-mobile-l">Primary Contact Name</th>
                         <th class="min-tablet">Primary Contact Number</th>
                         <th class="min-tablet">Address</th>
-                        <th class="min-tablet-l">Total Members</th>
+                        <th class="none">Native Address</th>
+                        <th class="none">Email</th>
+                        <th class="none">Gotra</th>
+                        <th class="none">Total Members</th>
                         {% endif %}
                         <th class="all" data-sortable="false"></th>
                       </tr>
@@ -142,9 +146,9 @@
 
             {{form.form_group('Occupation', 'text', 'occupation', body.occupation, '')}}
 
-            {{form.form_group_picker('Date of birth', 'datetimepicker', 'dateOfBirth', body.dateOfBirth, '', 'required=true')}}
+            {{form.form_group_picker('Date of birth', 'datepicker', 'dateOfBirth', body.dateOfBirth, '', 'required=true')}}
 
-            {{form.form_group_picker('Date of Marriage', 'datetimepicker','dateOfMarriage', body.dateOfMarriage, '')}}
+            {{form.form_group_picker('Date of Marriage', 'datepicker','dateOfMarriage', body.dateOfMarriage, '')}}
 
             {{form.form_group('Contact number', 'text', 'contactNumber', body.contactNumber, '', 'number=true', 'maxLength=10', 'minLength=10')}}
 
@@ -196,58 +200,36 @@
   </div>
   <!--  End Modal -->
 
-  <!-- Edit User Modal -->
-  <div class="modal fade modal-primary" id="editUser" tabindex="-1" role="dialog">
+  <!-- Edit Common Detail Modal -->
+  <div class="modal fade modal-primary" id="editCommonDetails" tabindex="-1" role="dialog">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header justify-content-center">
-          <h4>Edit User</h4>
+          <h4>Edit Common Details</h4>
         </div>
         <div class="modal-body">
-          <form method="POST" action="{{admin_url}}users/edit/" enctype="multipart/form-data" id="Validation"
+          <form method="POST" action="{{admin_url}}users/edit/commonDetail?isAdmin=true" enctype="multipart/form-data" id="Validation"
             onkeypress="return event.keyCode != 13;">
             <div id="message">
             </div>
-            {{form.hidden('id', body.id, '', 'required=true')}}
 
-            {{form.form_group('Name', 'text', 'name', body.name, '', 'required=true')}}
+            {{form.form_group('Email', 'email', 'email', body.email, '', 'required=true')}}
+
+            {{form.form_group('Gotra', 'text', 'gotra', body.gotra, '', 'required=true')}}
+
+            {{form.form_group('Address', 'text', 'address', body.address, '', 'required=true')}}
+
+            {{form.form_group('Native Address', 'text', 'nativeAddress', body.nativeAddress, '', 'required=true')}}
 
             <div class="form-group has-label">
               <label>
-                Gender
+                Primary Contact
                 <star class="star">*</star>
               </label>
-              <div class="row">
-                <div class="col-sm-6">
-                  <div class="form-check form-check-radio">
-                    <label class="form-check-label">
-                      <input type="radio" name="gender" class="form-check-input" value="Male" required="true"/>
-                      <span class="form-check-sign"></span>
-                      Male
-                    </label>
-                  </div>
-                </div>
-                <div class="col-sm-6">
-                  <div class="form-check form-check-radio">
-                    <label class="form-check-label">
-                      <input type="radio" name="gender" class="form-check-input" value="Female" required="true"/>
-                      <span class="form-check-sign"></span>
-                      Female
-                    </label>
-                  </div>
-                </div>
-              </div>
+              <select name="primaryContact" class="selectpicker" data-title="Select Primary Contact" data-style="btn-default btn-outline"
+                data-menu-style="dropdown-blue" data-size="5" required>
+              </select>
             </div>
-
-            {{form.form_group('Occupation', 'text', 'occupation', body.occupation, '')}}
-
-            {{form.form_group_picker('Date of birth', 'datetimepicker', 'dateOfBirth', body.dateOfBirth, '')}}
-
-            {{form.form_group_picker('Date of Marriage', 'datetimepicker', 'dateOfMarriage', body.dateOfMarriage, '')}}
-
-            {{form.form_group('Contact number', 'text', 'contactNumber', body.contactNumber, '', 'number=true', 'maxLength=10', 'minLength=10', 'required=true')}}
-
-            {{form.form_group('Address', 'text', 'address', body.address, '', 'required=true')}}
 
             <div class="form-group has-label">
               <label>
@@ -256,14 +238,27 @@
               </label>
               <select name="head" class="selectpicker" data-title="Select Head" data-style="btn-default btn-outline"
                 data-menu-style="dropdown-blue" data-size="5" required>
-                {% for user in users %}
-                <option value="{{user._id}}">{{user.name}}</option>
-                {% endfor %}
               </select>
+            </div>
+            <div class="form-group has-label">
+              <label>
+                Family Photo
+              </label>
+              <div class="row">
+                <div class="col-sm-3">
+                  <button type="button" class="click btn btn-danger">Browse</button>
+                </div>
+                <div class="col-sm-7">
+                  <img class="img" src="" height="80">
+                </div>
+                <div class="col-sm-2">
+                  <input type="file" name="picture" filesize="1" style="visibility:hidden;" />
+                </div>
+              </div>
             </div>
             <div class="form-group">
               <div class="text-center">
-                <button type="submit" class="btn btn-wd btn-danger">Update User</button>
+                <button type="submit" class="btn btn-wd btn-danger">Update Common Details</button>
               </div>
             </div>
           </form>
@@ -328,8 +323,8 @@
                           <th class="min-mobile-l">Gender</th>
                           <th class="min-tablet">Occupation</th>
                           <th class="min-tablet">Date Of Birth</th>
-                          <th class="min-tablet-l">Date Of Marriage</th>
-                          <th class="min-desktop">Contact Number</th>
+                          <th class="none">Date Of Marriage</th>
+                          <th class="none">Contact Number</th>
                           <!-- <th data-sortable="false">Actions</th> -->
                           <th class="all" data-sortable="false"></th>
                         </tr>
@@ -352,13 +347,13 @@
   <!--  End Modal -->
   <!-- Picture Modal -->
   <div class="modal fade modal-primary" id="picture" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="btn btn-link btn-simple" data-dismiss="modal">Back</button>
         </div>
         <div class="modal-body text-center">
-          <img src="/img/faces/face-1.jpg" alt="Not found" width="200" height="200" />
+          <img src="/img/faces/face-1.jpg" alt="Not found" width="400" height="400" />
         </div>
       </div>
     </div>
@@ -433,10 +428,14 @@
     columns = [
       's_no',
       'status',
+      'actions',
       'picture',
       'primaryContactName',
       'primaryContactNumber',
       'address',
+      'nativeAddress',
+      'email',
+      'gotra',
       'totalMembers',
       'noUse',
     ];
@@ -507,7 +506,26 @@
           const search = userTable.search();
           $(document).ready(() => {
             $("[data-toggle='commonDetailsApproved']").bootstrapSwitch();
-            setToggleState('commonDetailsApproved', '{{admin_url}}users/approve');
+            $("[data-toggle='commonDetailsApproved']").on('switchChange.bootstrapSwitch', function () {
+              const id = $(this).parents().eq(3).find('span').eq(3).html();
+              const status = $(this).is(':checked');
+              const url = '{{admin_url}}users/approve?approveAllFamilyMembers=true';
+              const approveAllFamilyMembers = new URLSearchParams(url.substring(url.indexOf('?'))).get('approveAllFamilyMembers') === 'true';
+              const requestParameters = { selector: 'commonDetailsApproved', url, id, status };
+              if (approveAllFamilyMembers && (!status)) {
+                return demo.showSwal(
+                  'custom-warning-message-and-confirmation',
+                  ``,
+                  'Users will not be able to see this family',
+                  ''
+                ).then(
+                  applyChange => applyChange 
+                    ? sendApprovalRequest(requestParameters)
+                    : userTable.draw()
+                );
+              }
+              sendApprovalRequest(requestParameters);
+            });
           });
           // console.log(json.data)
 
@@ -530,6 +548,9 @@
               dateOfBirth,
               dateOfMarriage,
               contactNumber,
+              nativeAddress,
+              email,
+              gotra,
             }
           ) => {
             let status;
@@ -539,25 +560,29 @@
               picture: `<img src=${picture || '/img/faces/face-0.jpg'} alt="Not found" width="40" height="40" data-toggle="modal" data-target="#picture">`,
               primaryContactName: `${primaryContact.name}<span style="display:none">${_id}</span>`,
               primaryContactNumber: primaryContact.contactNumber,
-              address,
+              address: address || '',
+              nativeAddress: nativeAddress || '',
+              email: email || '',
+              gotra: gotra || '',
               noUse: ''
             };
 
             {% if user.isAdmin %}
             // jsonData.status = `<div>Total Approved: ${totalApprovedMembers}</div><div>Total Unapproved: ${totalUnapprovedMembers}</div>`;
-            jsonData.status = `<input class='check' type='checkbox' ${status} data-toggle='commonDetailsApproved' data-on-color='primary' data-off-color='primary' data-on-text='' data-off-text=''><span style="display:none">${_id}</span>`;
-            jsonData.totalMembers = totalMembers;
+            jsonData.status = `<input class='check' type='checkbox' ${status} data-toggle='commonDetailsApproved' data-on-color='success' data-off-color='success' data-on-text='' data-off-text=''><span style="display:none">${_id}</span>`;
+            jsonData.actions = '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editCommonDetails" rel="tooltip" title="Edit Common Details"><i class="fa fa-edit"></i></a><br/>';
+            jsonData.totalMembers = totalMembers || '';
             {% endif %}
 
             {% if not user.isAdmin %}
             // jsonData.picture = `<img src="${picture ? '{{image_url}}' + picture : '{{image_base}}'}" width="80"><span style="display:none">${_id}</span>`,
-            jsonData.name = name,
-            jsonData.gender = gender,
+            jsonData.name = name || '',
+            jsonData.gender = gender || '',
             jsonData.occupation = occupation || '',
             jsonData.dateOfBirth = dateOfBirth,
             jsonData.dateOfMarriage = dateOfMarriage || '',
-            jsonData.contactNumber = contactNumber,
-            jsonData.actions = search ? '' : '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editUser" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/' + _id + '","user","{{admin_url}}users") href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>';
+            jsonData.contactNumber = contactNumber || '',
+            jsonData.actions = search ? '' : '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editCommonDetails" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/' + _id + '","user","{{admin_url}}users") href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>';
             {% endif %}
 
             arr.push(jsonData);
@@ -626,7 +651,29 @@
           // const search = familyMembersTable.search();
           $(document).ready(() => {
             $("[data-toggle='approved']").bootstrapSwitch();
-            setToggleState('approved', '{{admin_url}}users/approve');
+            // setToggleState('approved', '{{admin_url}}users/approve');
+            $("[data-toggle='approved']").on('switchChange.bootstrapSwitch', function () {
+              const id = $(this).parents().eq(3).find('span').eq(3).html();
+              const primaryContact = $(this).parents().eq(3).find('span').eq(4).html();
+              const isPrimary = id === primaryContact;
+              const status = $(this).is(':checked');
+              const url = `{{admin_url}}users/approve${isPrimary && (!status) ? '?approveAllFamilyMembers=true' : ''}`;
+              const requestParameters = { selector: 'approved', url, id, status };
+              if (isPrimary && (!status)) {
+                return demo.showSwal(
+                  'custom-warning-message-and-confirmation',
+                  ``,
+                  'Users will not be able to see this family',
+                  ''
+                ).then(applyChange => {
+                  if (applyChange) {
+                    sendApprovalRequest(requestParameters)
+                    familyMembersTable.draw()
+                  }
+                });
+              }
+              sendApprovalRequest(requestParameters);
+            });  
           });
           // console.log(json.data)
 
@@ -641,21 +688,25 @@
               dateOfBirth,
               dateOfMarriage,
               contactNumber,
+              primaryContact,
+              head,
             }
           ) => {
             let status;
             status = isApproved ? 'checked' : '';
+            const isPrimary = _id === primaryContact._id;
+            const isHead = _id === head._id;
             arr.push({
-              s_no: `<span style="display:none">${_id}</span>`,
+              s_no: `<span style="display:none">${_id}</span><span style="display:none">${primaryContact._id}</span>`,
               // picture: `<img src="${picture ? '{{image_url}}' + picture : '{{image_base}}'}" width="80"><span style="display:none">${_id}</span>`,
-              name: `${name}<span style="display:none">${_id}</span>`,
+              name: `${name || ''}${isPrimary ? ' <code>P</code>' : ''}${isHead ? ' <code>H</code>' : ''}<span style="display:none">${_id}</span><span style="display:none">${primaryContact._id}</span>`,
               gender: gender || '',
               occupation: occupation || '',
-              dateOfBirth,
+              dateOfBirth: dateOfBirth || '',
               dateOfMarriage: dateOfMarriage || '',
               contactNumber: contactNumber || '',
-              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='primary' data-off-color='primary' data-on-text='' data-off-text=''><span style="display:none">${_id}</span>`,
-              // actions: search ? '' : '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editUser" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/' + _id + '","user","{{admin_url}}users") href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>',
+              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='success' data-off-color='success' data-on-text='' data-off-text=''><span style="display:none">${_id}</span><span style="display:none">${primaryContact._id}</span>`,
+              // actions: search ? '' : '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editCommonDetails" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/' + _id + '","user","{{admin_url}}users") href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>',
               noUse: ''
             });
             return arr;
@@ -693,11 +744,11 @@
 
     // triggerFile('#addValidation');
 
-    // triggerFile('#Validation');
+    triggerFile('#Validation');
 
     // onFileChange('#addValidation');
 
-    // onFileChange('#Validation');
+    onFileChange('#Validation');
 
     $('#addValidation').submit(function (e) {
       if (!contactNumber_check) {
@@ -749,7 +800,7 @@
       greaterThan: ['#Validation [name="dateOfBirth"]', 'date of birth', 15],
     });
 
-    $('#editUser').on('hidden.bs.modal', () => {
+    $('#editCommonDetails').on('hidden.bs.modal', () => {
       contactNumber_check = true;
       message = '';
       $('#Validation')[0].reset();
@@ -758,29 +809,43 @@
     });
 
     $(document).on('click', '.edit', function () {
-      const id = $(this).parents('tr').find('td').eq(1).find('span').html();
-      $.get('{{admin_url}}users/view/' + id, user => {
-        const { name, gender, occupation, dateOfBirth, dateOfMarriage, contactNumber, address, head, picture } = user;
-        $('#Validation [name="id"]').val(id);
-        $('#Validation [name="name"]').val(name);
-        $('#Validation [name="gender"][value="' + gender + '"]').attr('checked', 'checked');
-        $('#Validation [name="occupation"]').val(occupation);
-        $('#Validation [name="dateOfBirth"]').val(new Date(dateOfBirth).toLocaleString());
-        $('#Validation [name="dateOfMarriage"]').val(dateOfMarriage ? new Date(dateOfMarriage).toLocaleString() : '');
-        $('#Validation [name="contactNumber"]').val(contactNumber);
-        $('#Validation [name="address"]').val(address);
-        $('#Validation [name="head"]').selectpicker('val', head);
+      const id = $(this).parents('tr').find('td').eq(3).find('span').html();
+      $.get(`{{admin_url}}users/view/${id}?includeFamilyMembers=true`, ({ users }) => {
+        const usersList = users.reduce(
+          (userData, user) => {
+           const option = `<option value=${user._id}>${user.name}</option>`;
+           if (user.isHead) {
+            userData.head = user._id;
+           }
+           if (user.isPrimary) {
+            userData.primaryContact = user._id;
+           }
+           $('#Validation [name="head"]').append(option);
+           $('#Validation [name="primaryContact"]').append(option);
+           return userData; 
+          },
+          { head: '', primaryContact: '' },
+        );
+        const { address, nativeAddress, email, gotra, picture } = users[0];
+        $('#Validation [name="address"]').val(address || '');
+        $('#Validation [name="nativeAddress"]').val(nativeAddress || '');
+        $('#Validation [name="email"]').val(email || '');
+        $('#Validation [name="gotra"]').val(gotra || '');
+        $('#Validation [name="head"]').selectpicker('val', usersList.head || '');
+        $('#Validation [name="head"]').selectpicker('refresh');
+        $('#Validation [name="primaryContact"]').selectpicker('val', usersList.primaryContact || '');
+        $('#Validation [name="primaryContact"]').selectpicker('refresh');
         // let img = picture;
         // img = img ? '{{admin_image_url}}' + img : '';
-        // $('#Validation .img').attr('src', img);
+        $('#Validation .img').attr('src', picture);
       });
     });
     {% if user.isAdmin %}
-    $(document).on('click', "#userTable td:not(:nth-child(1)):not(:nth-child(2))", function () {
+    $(document).on('click', "#userTable td:not(:nth-child(1)):not(:nth-child(2)):not(:nth-child(3))", function () {
       const children = $(this).parent().children();
-      const primaryContact = children.eq(2).find('span').eq(0).html();
-      const contactNumber = children.eq(3).html();
-      const address = children.eq(4).html();
+      const primaryContact = children.eq(3).find('span').eq(0).html();
+      const contactNumber = children.eq(4).html();
+      const address = children.eq(5).html();
       $('#approveFamily').click(() => sendApprovalRequest({
         selector: 'approved',
         url: '{{admin_url}}users/approve?approveAllFamilyMembers=true',

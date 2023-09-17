@@ -19,10 +19,10 @@
                     &nbsp;&nbsp;&nbsp;
                     <div class="row">
                       <div class="col-12 col-sm-4">
-                        {{form.form_group_picker('From', 'datetimepicker', 'fromDate', body.fromDate, '')}}
+                        {{form.form_group_picker('From', 'datepicker', 'fromDate', body.fromDate, '')}}
                        </div>
                       <div class="col-12 col-sm-4">
-                        {{form.form_group_picker('To', 'datetimepicker', 'toDate', body.toDate, '')}}
+                        {{form.form_group_picker('To', 'datepicker', 'toDate', body.toDate, '')}}
                       </div>
                       <div class="col-12 col-sm-4">
                         <div class="form-group has-label">
@@ -213,7 +213,7 @@
             const jsonData = {
               s_no: `<span style="display:none">${_id}</span>`,
               gotra: _id,
-              totalMembers,
+              totalMembers: totalMembers || '',
             //   noUse: `<span style="display:none">${JSON.stringify(users)}</span>`,
               noUse: '',
             };
@@ -272,18 +272,18 @@
           ) => {
             const jsonData = {
               s_no: `<span style="display:none">${_id}</span>`,
-              name,
-              gender,
-              occupation,
-              dateOfBirth,
-              dateOfMarriage,
-              contactNumber,
+              name: name || '',
+              gender: gender || '',
+              occupation: occupation || '',
+              dateOfBirth: dateOfBirth || '',
+              dateOfMarriage: dateOfMarriage || '',
+              contactNumber: contactNumber || '',
               primaryContactNumber: primaryContact.contactNumber,
               primaryContactName: primaryContact.name,
               headName: head.name,
-              address,
-              nativeAddress,
-              email,
+              address: address || '',
+              nativeAddress: nativeAddress || '',
+              email: email || '',
               gotra: _id,
             //   noUse: `<span style="display:none">${JSON.stringify(users)}</span>`,
               noUse: '',
