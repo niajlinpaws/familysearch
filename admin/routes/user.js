@@ -1,3 +1,4 @@
+const fs = require('fs');
 const express = require('express');
 const { model, Types: { ObjectId } } = require('mongoose');
 const path = require('path');
@@ -1238,6 +1239,30 @@ router.post('/users/approve', FX.Auth, FX.validate(vrules.approveUser, 'user.htm
     res.status(200).json({ message: `status changed ${isApprovedCondition ? isApproved : isCommonDetailsApproved}` });
   } catch(err) {
 	next(err);
+  }
+});
+
+router.get('/users/import', async (req, res, next) => {
+  try {
+    let userData = await User.find({}).lean();
+    fs.writeFile(path.join(__dirname, '../..', 'usersCollectionBackup.json'), JSON.stringify(userData), err => {
+	  res.status(200).json(userData);
+	});
+  } catch(err) {
+    next(err);
+  }
+});
+
+router.get('/users/export', async (req, res, next) => {
+  try {
+	const destination = path.join(__dirname, '../..', 'usersCollectionBackup.json');
+	fs.readFile(destination, async (err, data) => {
+	  const userData = JSON.parse(data);
+	  await User.insertMany(userData);
+  	  res.status(200).json(userData);
+    });
+  } catch(err) {
+    next(err);
   }
 });
 
