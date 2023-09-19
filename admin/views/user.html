@@ -61,8 +61,9 @@
                       <tr>
                         <th class="all">S.No</th>
                         <th class="all" data-sortable="false">Status</th>
-                        <th class="all">Name</th>
-                        <th class="min-mobile-l">Gender</th>
+                        <th class="all" data-sortable="false">Actions</th>
+                        <th class="min-mobile-l">Name</th>
+                        <th class="min-tablet">Gender</th>
                         <th class="min-tablet">Occupation</th>
                         <th class="min-tablet">Date of birth</th>
                         <th class="min-tablet-l">Date of marriage</th>
@@ -74,7 +75,6 @@
                         <th class="none">Head name</th>
                         <th class="none">Primary contact name</th>
                         <th class="none">Primary contact number</th>
-                        <th class="none" data-sortable="false">Actions</th>
                         <th class="all" data-sortable="false"></th>
                       </tr>
                     </thead>
@@ -219,6 +219,7 @@
     let columns = [
       's_no',
       'status',
+      'actions',
       'name',
   	  'gender',
   	  'occupation',
@@ -232,7 +233,6 @@
       'headName',
       'primaryContactName',
       'primaryContactNumber',
-      'actions',
       'noUse',
     ];
 
@@ -249,7 +249,27 @@
       },
       processing: true,
       serverSide: true,
-      responsive: true,
+      responsive: {
+        details: {
+          display: $.fn.dataTable.Responsive.display.modal({
+            header: function (row) {
+              const data = row.data();
+              return 'Details for ' + data.name;
+            },
+          }),
+          renderer: function ( api, rowIdx, columns ) {
+            var data = $.map( columns, function ( col, i ) {
+              return i > 2 ? `<tr>
+                <td>${col.title}:</td>
+                <td>${col.data}</td>
+              </tr>` : '';
+            } ).join('');
+ 
+              return $('<table/>').append( data );
+          }
+          // renderer: $.fn.dataTable.Responsive.renderer.tableAll(),
+        },
+      },
       ajax: {
         url: '{{admin_url}}users/find/individual',
         type: 'POST',
@@ -301,7 +321,7 @@
               'headName': head.name,
               'primaryContactName': primaryContact.name,
               'primaryContactNumber': primaryContact.contactNumber,
-              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='success' data-off-color='success' data-on-text='' data-off-text=''><span style="display:none">${_id}</span>`,
+              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='success' data-off-color='success' data-on-text='<i class="fa fa-check"></i>' data-off-text='<i class="fa fa-times"></i>'><span style="display:none">${_id}</span>`,
               actions: `<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editUser" rel="tooltip" title="Edit User"><span style="display:none">${_id}</span><span style="display:none">${primaryContact._id}</span><i class="fa fa-edit"></i></a><br/><a onclick=${_id === primaryContact._id ? 'demo.showSwal("title-and-text","","","")' : `demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/${_id}","user","{{admin_url}}users")`} href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>`,
               noUse: '',
             };

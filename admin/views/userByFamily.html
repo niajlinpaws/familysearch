@@ -462,7 +462,27 @@
       //"bInfo": false,
       processing: true,
       serverSide: true,
-      responsive: true,
+      responsive: {
+        details: {
+          display: $.fn.dataTable.Responsive.display.modal({
+            header: function (row) {
+              const data = row.data();
+              return 'Details for ' + data.primaryContactName;
+            },
+          }),
+          renderer: function ( api, rowIdx, columns ) {
+            var data = $.map( columns, function ( col, i ) {
+              return i > 3 ? `<tr>
+                <td>${col.title}:</td>
+                <td>${col.data}</td>
+              </tr>` : '';
+            } ).join('');
+ 
+              return $('<table/>').append( data );
+          }
+          // renderer: $.fn.dataTable.Responsive.renderer.tableAll(),
+        },
+      },
       // responsive: {
       //   details: {
       //     renderer: function (api, rowIdx, columns) {
@@ -569,7 +589,7 @@
 
             {% if user.isAdmin %}
             // jsonData.status = `<div>Total Approved: ${totalApprovedMembers}</div><div>Total Unapproved: ${totalUnapprovedMembers}</div>`;
-            jsonData.status = `<input class='check' type='checkbox' ${status} data-toggle='commonDetailsApproved' data-on-color='success' data-off-color='success' data-on-text='' data-off-text=''><span style="display:none">${_id}</span>`;
+            jsonData.status = `<input class='check' type='checkbox' ${status} data-toggle='commonDetailsApproved' data-on-color='success' data-off-color='success' data-on-text='<i class="fa fa-check"></i>' data-off-text='<i class="fa fa-times"></i>'><span style="display:none">${_id}</span>`;
             jsonData.actions = '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editCommonDetails" rel="tooltip" title="Edit Common Details"><i class="fa fa-edit"></i></a><br/>';
             jsonData.totalMembers = totalMembers || '';
             {% endif %}
@@ -639,7 +659,27 @@
       // bInfo: false,
       processing: true,
       serverSide: true,
-      responsive: true,
+      responsive: {
+        details: {
+          display: $.fn.dataTable.Responsive.display.modal({
+            header: function (row) {
+              const data = row.data();
+              return 'Details for ' + data.name;
+            },
+          }),
+          renderer: function ( api, rowIdx, columns ) {
+            var data = $.map( columns, function ( col, i ) {
+              return i > 1 ? `<tr>
+                <td>${col.title}:</td>
+                <td>${col.data}</td>
+              </tr>` : '';
+            } ).join('');
+ 
+              return $('<table/>').append( data );
+          }
+          // renderer: $.fn.dataTable.Responsive.renderer.tableAll(),
+        },
+      },
       // fixedColumns: {
       //   leftColumns: 2,
       //   // right: 1,
@@ -665,12 +705,10 @@
                   ``,
                   'Users will not be able to see this family',
                   ''
-                ).then(applyChange => {
-                  if (applyChange) {
-                    sendApprovalRequest(requestParameters)
-                    familyMembersTable.draw()
-                  }
-                });
+                ).then(applyChange => applyChange
+                  ? sendApprovalRequest(requestParameters)
+                  : familyMembersTable.draw()
+                );
               }
               sendApprovalRequest(requestParameters);
             });  
@@ -705,7 +743,7 @@
               dateOfBirth: dateOfBirth || '',
               dateOfMarriage: dateOfMarriage || '',
               contactNumber: contactNumber || '',
-              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='success' data-off-color='success' data-on-text='' data-off-text=''><span style="display:none">${_id}</span><span style="display:none">${primaryContact._id}</span>`,
+              status: `<input class='check' type='checkbox' ${status} data-toggle='approved' data-on-color='success' data-off-color='success' data-on-text='<i class="fa fa-check"></i>' data-off-text='<i class="fa fa-times"></i>'><span style="display:none">${_id}</span><span style="display:none">${primaryContact._id}</span>`,
               // actions: search ? '' : '<div class="text-center"><a href="javascript:void(0)" class="btn btn-round  btn-icon btn-danger edit" data-toggle="modal" data-target="#editCommonDetails" rel="tooltip" title="Edit User"><i class="fa fa-edit"></i></a><br/><a onclick=demo.showSwal("warning-message-and-confirmation","{{admin_url}}users/delete/' + _id + '","user","{{admin_url}}users") href="javascript:void(0)" class="btn btn-round btn-icon btn-danger remove" rel="tooltip" title="Delete User"><i class="fa fa-trash-o"></i></a></div>',
               noUse: ''
             });
@@ -858,7 +896,7 @@
         'family',
         '{{admin_url}}users/family'
       ));
-      $('#Validation').hide();
+      // $('#Validation').hide();
       // $('#addValidation').hide();
       $('#familyUserTable  .view').html('');
       $('#familyUserTable .view').append(`
